@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Category Form View -->
+    <record id="llm_document_category_view_form" model="ir.ui.view">
+        <field name="name">llm.document.category.form</field>
+        <field name="model">llm.document.category</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tên thể loại"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="parent_id" string="Thể loại cha"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Category Tree View -->
+    <record id="llm_document_category_view_tree" model="ir.ui.view">
+        <field name="name">llm.document.category.tree</field>
+        <field name="model">llm.document.category</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="complete_name" string="Tên"/>
+                <field name="template_count" string="Số mẫu"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Category Search View -->
+    <record id="llm_document_category_view_search" model="ir.ui.view">
+        <field name="name">llm.document.category.search</field>
+        <field name="model">llm.document.category</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Parent Category" name="group_parent" context="{'group_by': 'parent_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Category Action -->
+    <record id="llm_document_category_action" model="ir.actions.act_window">
+        <field name="name">Thể loại</field>
+        <field name="res_model">llm.document.category</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo thể loại đầu tiên!
+            </p>
+        </field>
+    </record>
+</odoo>

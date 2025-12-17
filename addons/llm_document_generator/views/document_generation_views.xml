@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Generation Form View -->
+    <record id="llm_document_generation_view_form" model="ir.ui.view">
+        <field name="name">llm.document.generation.form</field>
+        <field name="model">llm.document.generation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_generate" type="object" string="🚀 Tạo tài liệu" class="btn-primary" invisible="state != 'draft'" confirm="Quá trình tạo tài liệu có thể mất 30-60 giây. Bấm OK để bắt đầu."/>
+                    <button name="action_regenerate" type="object" string="🔄 Tạo lại" class="btn-secondary" invisible="state not in ('done', 'error')" confirm="Tạo lại tài liệu? Quá trình có thể mất 30-60 giây."/>
+                    <button name="action_reset_draft" type="object" string="Về nháp" invisible="state == 'draft'"/>
+                    <button name="action_export_pdf" type="object" string="Tải PDF" class="btn-success" invisible="state != 'done'"/>
+                    <button name="action_export_docx" type="object" string="Tải DOCX" class="btn-success" invisible="state != 'done'"/>
+                    <button name="action_export_markdown" type="object" string="Tải Markdown" invisible="state != 'done'"/>
+                    <button name="action_export_html" type="object" string="Tải HTML" invisible="state != 'done'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,generating,done"/>
+                </header>
+                <sheet>
+                    <!-- Loading indicator when generating -->
+                    <div invisible="state != 'generating'" class="alert alert-info text-center">
+                        <i class="fa fa-spinner fa-spin fa-2x"/>
+                        <h4>Đang tạo tài liệu...</h4>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tên tài liệu"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="template_id" readonly="state != 'draft'"/>
+                        <field name="selected_model_id" readonly="state != 'draft'" invisible="state != 'draft'"/>
+                    </group>
+                    <group invisible="state != 'draft'">
+                        <field name="requirements"/>
+                    </group>
+                    <!-- Error message -->
+                    <div invisible="state != 'error'" class="alert alert-danger">
+                        <strong>Lỗi:</strong>
+                        <field name="error_message" nolabel="1"/>
+                    </div>
+                    <!-- Generated content -->
+                    <field name="generated_content" readonly="1" invisible="state != 'done'"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Generation Tree View -->
+    <record id="llm_document_generation_view_tree" model="ir.ui.view">
+        <field name="name">llm.document.generation.tree</field>
+        <field name="model">llm.document.generation</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="template_id"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-warning="state == 'generating'" decoration-danger="state == 'error'"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Generation Search View -->
+    <record id="llm_document_generation_view_search" model="ir.ui.view">
+        <field name="name">llm.document.generation.search</field>
+        <field name="model">llm.document.generation</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="template_id"/>
+                <field name="category_id"/>
+                <filter string="Nháp" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Hoàn thành" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="Lỗi" name="error" domain="[('state', '=', 'error')]"/>
+                <separator/>
+                <filter string="Của tôi" name="my_docs" domain="[('create_uid', '=', uid)]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Loại tài liệu" name="group_template" context="{'group_by': 'template_id'}"/>
+                    <filter string="Thể loại" name="group_category" context="{'group_by': 'category_id'}"/>
+                    <filter string="Trạng thái" name="group_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Generation Action -->
+    <record id="llm_document_generation_action" model="ir.actions.act_window">
+        <field name="name">Tài liệu đã tạo</field>
+        <field name="res_model">llm.document.generation</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_my_docs': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có tài liệu nào!
+            </p>
+            <p>
+                Sử dụng menu "Tạo tài liệu" để tạo tài liệu mới.
+            </p>
+        </field>
+    </record>
+</odoo>

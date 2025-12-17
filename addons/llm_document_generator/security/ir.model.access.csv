@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_llm_document_category_user,llm.document.category.user,model_llm_document_category,base.group_user,1,0,0,0
+access_llm_document_category_manager,llm.document.category.manager,model_llm_document_category,base.group_system,1,1,1,1
+access_llm_document_template_user,llm.document.template.user,model_llm_document_template,base.group_user,1,0,0,0
+access_llm_document_template_manager,llm.document.template.manager,model_llm_document_template,base.group_system,1,1,1,1
+access_llm_document_generation_user,llm.document.generation.user,model_llm_document_generation,base.group_user,1,1,1,1
+access_llm_generate_document_wizard_user,llm.generate.document.wizard.user,model_llm_generate_document_wizard,base.group_user,1,1,1,1

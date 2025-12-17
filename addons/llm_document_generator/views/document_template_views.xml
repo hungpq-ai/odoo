@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Template Form View -->
+    <record id="llm_document_template_view_form" model="ir.ui.view">
+        <field name="name">llm.document.template.form</field>
+        <field name="model">llm.document.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_generations" icon="fa-file-text-o">
+                            <field name="generation_count" widget="statinfo" string="Đã tạo"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Tên mẫu tài liệu"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="category_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Nội dung mẫu" name="sample">
+                            <group>
+                                <field name="sample_file" filename="sample_filename" string="Upload file mẫu"/>
+                                <field name="sample_filename" invisible="1"/>
+                            </group>
+                            <field name="sample_content" placeholder="Hoặc nhập/dán nội dung văn bản mẫu vào đây..."/>
+                        </page>
+                        <page string="Cấu hình AI" name="prompts">
+                            <group>
+                                <field name="system_prompt"/>
+                            </group>
+                            <group>
+                                <field name="user_prompt_template"/>
+                            </group>
+                            <div class="alert alert-info">
+                                <strong>Biến có thể dùng:</strong>
+                                <ul>
+                                    <li><code>{sample}</code> - Nội dung mẫu</li>
+                                    <li><code>{context}</code> - Yêu cầu từ người dùng</li>
+                                </ul>
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Template Tree View -->
+    <record id="llm_document_template_view_tree" model="ir.ui.view">
+        <field name="name">llm.document.template.tree</field>
+        <field name="model">llm.document.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="category_id"/>
+                <field name="generation_count" string="Đã tạo"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Template Search View -->
+    <record id="llm_document_template_view_search" model="ir.ui.view">
+        <field name="name">llm.document.template.search</field>
+        <field name="model">llm.document.template</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="category_id"/>
+                <filter string="Đã lưu trữ" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Nhóm theo">
+                    <filter string="Thể loại" name="group_category" context="{'group_by': 'category_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Template Action -->
+    <record id="llm_document_template_action" model="ir.actions.act_window">
+        <field name="name">Mẫu tài liệu</field>
+        <field name="res_model">llm.document.template</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo mẫu tài liệu đầu tiên!
+            </p>
+            <p>
+                Upload hoặc nhập nội dung văn bản mẫu để AI tham khảo khi tạo tài liệu mới.
+            </p>
+        </field>
+    </record>
+</odoo>

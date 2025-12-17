@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- List View -->
+    <record id="view_llm_mcp_server_list" model="ir.ui.view">
+        <field name="name">llm.mcp.server.list</field>
+        <field name="model">llm.mcp.server</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name" />
+                <field name="transport" />
+                <field name="is_connected" />
+                <field name="is_active" />
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_llm_mcp_server_form" model="ir.ui.view">
+        <field name="name">llm.mcp.server.form</field>
+        <field name="model">llm.mcp.server</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="start_server" string="Connect" type="object" class="oe_highlight" invisible="is_connected" />
+                    <button name="stop_server" string="Disconnect" type="object" invisible="not is_connected" />
+                    <button name="list_tools" string="Refresh Tools" type="object" invisible="not is_connected" />
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Basic Info">
+                            <field name="name" />
+                            <field name="transport" />
+                            <field name="is_connected" readonly="1" />
+                            <field name="is_active" />
+                        </group>
+                        <group string="Configuration">
+                            <field name="command" invisible="transport != 'stdio'" required="transport == 'stdio'" />
+                            <field name="args" invisible="transport != 'stdio'" />
+                            <field name="url" invisible="transport != 'sse'" required="transport == 'sse'" />
+                            <field name="api_key" invisible="transport != 'sse'" password="True" />
+                        </group>
+                    </group>
+                    <group string="Remote Server Info" invisible="not is_connected">
+                        <field name="protocol_version" readonly="1" />
+                        <field name="server_info" readonly="1" />
+                    </group>
+                    <notebook>
+                        <page string="Tools">
+                            <field name="tool_ids" readonly="1">
+                                <list>
+                                    <field name="name" />
+                                    <field name="description" />
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_llm_mcp_server" model="ir.actions.act_window">
+        <field name="name">MCP Clients</field>
+        <field name="res_model">llm.mcp.server</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new MCP Client connection
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem
+        id="menu_llm_mcp_server"
+        name="MCP Clients"
+        parent="llm.menu_llm_config"
+        action="action_llm_mcp_server"
+        sequence="50"
+    />
+</odoo>

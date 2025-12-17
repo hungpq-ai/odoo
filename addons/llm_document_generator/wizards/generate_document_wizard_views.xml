@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Generate Document Wizard Form -->
+    <record id="llm_generate_document_wizard_view_form" model="ir.ui.view">
+        <field name="name">llm.generate.document.wizard.form</field>
+        <field name="model">llm.generate.document.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Tạo tài liệu">
+                <group>
+                    <field name="template_id" options="{'no_create': True}"/>
+                    <field name="category_id"/>
+                </group>
+                <group>
+                    <field name="requirements" placeholder="Nhập yêu cầu chi tiết cho tài liệu cần tạo..."/>
+                </group>
+                <group>
+                    <field name="model_id" options="{'no_create': True}"/>
+                </group>
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"/> Quá trình tạo tài liệu có thể mất 30-60 giây. Vui lòng đợi sau khi bấm nút.
+                </div>
+                <footer>
+                    <button name="action_generate_now" type="object" string="🚀 Tạo tài liệu" class="btn-primary"/>
+                    <button name="action_generate" type="object" string="📝 Tạo nháp" class="btn-secondary"/>
+                    <button string="Hủy" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Wizard Action -->
+    <record id="llm_generate_document_wizard_action" model="ir.actions.act_window">
+        <field name="name">Tạo tài liệu</field>
+        <field name="res_model">llm.generate.document.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

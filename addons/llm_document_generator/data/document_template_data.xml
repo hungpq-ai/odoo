@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Summary Report Template -->
+        <record id="template_summary_report" model="llm.document.template">
+            <field name="name">Báo cáo tổng kết</field>
+            <field name="code">summary_report</field>
+            <field name="category_id" ref="category_summary_report"/>
+            <field name="description">Tạo báo cáo tổng kết từ các tài liệu nguồn</field>
+            <field name="system_prompt">Bạn là chuyên gia soạn thảo báo cáo tổng kết chuyên nghiệp.
+Nhiệm vụ: Tổng hợp thông tin từ các tài liệu nguồn thành một báo cáo tổng kết hoàn chỉnh.
+
+Yêu cầu:
+- Cấu trúc rõ ràng với các phần: Mở đầu, Nội dung chính, Kết luận và Kiến nghị
+- Sử dụng ngôn ngữ trang trọng, chính xác
+- Trích dẫn số liệu, dữ kiện từ tài liệu nguồn
+- Đưa ra nhận xét, đánh giá khách quan</field>
+            <field name="user_prompt_template">Dựa trên các tài liệu nguồn sau:
+
+{context}
+
+Hãy tạo một BÁO CÁO TỔNG KẾT với cấu trúc:
+
+1. **MỞ ĐẦU**
+   - Mục đích báo cáo
+   - Phạm vi và thời gian
+
+2. **NỘI DUNG CHÍNH**
+   - Tổng quan tình hình
+   - Kết quả đạt được
+   - Những tồn tại, hạn chế
+
+3. **KẾT LUẬN VÀ KIẾN NGHỊ**
+   - Đánh giá chung
+   - Các kiến nghị, đề xuất
+
+Yêu cầu bổ sung: {requirements}</field>
+            <field name="output_format">markdown</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Analysis Report Template -->
+        <record id="template_analysis_report" model="llm.document.template">
+            <field name="name">Báo cáo phân tích</field>
+            <field name="code">analysis_report</field>
+            <field name="category_id" ref="category_analysis_report"/>
+            <field name="description">Phân tích chuyên sâu từ dữ liệu nguồn</field>
+            <field name="system_prompt">Bạn là chuyên gia phân tích dữ liệu và viết báo cáo.
+Nhiệm vụ: Phân tích thông tin từ tài liệu nguồn và đưa ra các insights có giá trị.
+
+Yêu cầu:
+- Phân tích logic, có cơ sở
+- Sử dụng dữ liệu định lượng khi có thể
+- Đưa ra các so sánh, xu hướng
+- Kết luận và khuyến nghị hành động</field>
+            <field name="user_prompt_template">Phân tích các tài liệu sau:
+
+{context}
+
+Tạo BÁO CÁO PHÂN TÍCH bao gồm:
+
+1. **TỔNG QUAN**
+   - Mô tả nguồn dữ liệu
+   - Phương pháp phân tích
+
+2. **PHÂN TÍCH CHI TIẾT**
+   - Các phát hiện chính
+   - Phân tích xu hướng
+   - So sánh và đối chiếu
+
+3. **INSIGHTS VÀ KHUYẾN NGHỊ**
+   - Các insights quan trọng
+   - Khuyến nghị hành động
+   - Rủi ro cần lưu ý
+
+{requirements}</field>
+            <field name="output_format">markdown</field>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Meeting Minutes Template -->
+        <record id="template_meeting_minutes" model="llm.document.template">
+            <field name="name">Biên bản họp</field>
+            <field name="code">meeting_minutes</field>
+            <field name="category_id" ref="category_minute"/>
+            <field name="description">Tạo biên bản họp từ ghi chép, recording</field>
+            <field name="system_prompt">Bạn là thư ký hành chính chuyên nghiệp.
+Nhiệm vụ: Soạn biên bản họp theo đúng thể thức văn bản hành chính Việt Nam.
+
+Yêu cầu:
+- Ghi đầy đủ thông tin: thời gian, địa điểm, thành phần
+- Tóm tắt các nội dung thảo luận
+- Liệt kê các quyết định, kết luận
+- Phân công nhiệm vụ cụ thể</field>
+            <field name="user_prompt_template">Dựa trên nội dung cuộc họp sau:
+
+{context}
+
+Tạo BIÊN BẢN HỌP theo mẫu:
+
+**BIÊN BẢN HỌP**
+
+1. Thời gian: [Xác định từ nội dung]
+2. Địa điểm: [Xác định từ nội dung]
+3. Thành phần tham dự:
+4. Chủ trì:
+5. Thư ký:
+
+**NỘI DUNG CUỘC HỌP:**
+
+I. Các vấn đề thảo luận:
+
+II. Các ý kiến phát biểu:
+
+III. Kết luận và quyết định:
+
+IV. Phân công thực hiện:
+
+{requirements}</field>
+            <field name="output_format">markdown</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <!-- Official Letter Template -->
+        <record id="template_official_letter" model="llm.document.template">
+            <field name="name">Công văn</field>
+            <field name="code">official_letter</field>
+            <field name="category_id" ref="category_letter"/>
+            <field name="description">Soạn công văn gửi đối tác, cơ quan</field>
+            <field name="system_prompt">Bạn là chuyên viên văn thư hành chính.
+Nhiệm vụ: Soạn công văn theo đúng thể thức văn bản hành chính.
+
+Yêu cầu:
+- Tuân thủ Nghị định 30/2020/NĐ-CP về công tác văn thư
+- Ngôn ngữ trang trọng, lịch sự
+- Nội dung rõ ràng, súc tích
+- Có phần kính chuyển phù hợp</field>
+            <field name="user_prompt_template">Dựa trên thông tin sau:
+
+{context}
+
+Soạn CÔNG VĂN với cấu trúc:
+
+[TÊN CƠ QUAN/ĐƠN VỊ]
+Số: .../CV-...
+
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+Độc lập - Tự do - Hạnh phúc
+
+..., ngày ... tháng ... năm ...
+
+**V/v:** [Trích yếu nội dung]
+
+Kính gửi: [Tên cơ quan/tổ chức nhận]
+
+[Nội dung công văn]
+
+Trân trọng./.
+
+Nơi nhận:
+- Như trên;
+- Lưu: VT, ...
+
+[Chức vụ người ký]
+[Họ và tên]
+
+{requirements}</field>
+            <field name="output_format">markdown</field>
+            <field name="sequence">40</field>
+        </record>
+
+        <!-- Proposal Template -->
+        <record id="template_proposal" model="llm.document.template">
+            <field name="name">Tờ trình đề xuất</field>
+            <field name="code">proposal</field>
+            <field name="category_id" ref="category_proposal"/>
+            <field name="description">Soạn tờ trình đề xuất phương án</field>
+            <field name="system_prompt">Bạn là chuyên viên lập kế hoạch và đề xuất.
+Nhiệm vụ: Soạn tờ trình đề xuất thuyết phục, có cơ sở.
+
+Yêu cầu:
+- Trình bày rõ lý do, căn cứ đề xuất
+- Phân tích ưu nhược điểm các phương án
+- Đề xuất phương án khả thi
+- Dự kiến nguồn lực và tiến độ</field>
+            <field name="user_prompt_template">Căn cứ vào các tài liệu:
+
+{context}
+
+Soạn TỜ TRÌNH ĐỀ XUẤT gồm:
+
+**TỜ TRÌNH**
+V/v: [Trích yếu đề xuất]
+
+Kính gửi: [Cấp có thẩm quyền]
+
+**I. CĂN CỨ ĐỀ XUẤT**
+- Căn cứ pháp lý
+- Căn cứ thực tiễn
+
+**II. THỰC TRẠNG VẤN ĐỀ**
+- Mô tả tình hình hiện tại
+- Những khó khăn, vướng mắc
+
+**III. NỘI DUNG ĐỀ XUẤT**
+- Phương án 1: ...
+- Phương án 2: ...
+- Đánh giá và so sánh các phương án
+
+**IV. KIẾN NGHỊ**
+- Phương án đề xuất
+- Lộ trình thực hiện
+- Nguồn lực cần thiết
+
+{requirements}</field>
+            <field name="output_format">markdown</field>
+            <field name="sequence">50</field>
+        </record>
+
+        <!-- User Guide Template -->
+        <record id="template_user_guide" model="llm.document.template">
+            <field name="name">Hướng dẫn sử dụng</field>
+            <field name="code">user_guide</field>
+            <field name="category_id" ref="category_user_guide"/>
+            <field name="description">Tạo tài liệu hướng dẫn sử dụng</field>
+            <field name="system_prompt">Bạn là technical writer chuyên nghiệp.
+Nhiệm vụ: Viết tài liệu hướng dẫn sử dụng dễ hiểu, chi tiết.
+
+Yêu cầu:
+- Ngôn ngữ đơn giản, dễ hiểu
+- Hướng dẫn từng bước cụ thể
+- Có ảnh minh họa khi cần
+- Bao gồm FAQ và troubleshooting</field>
+            <field name="user_prompt_template">Dựa trên tài liệu kỹ thuật:
+
+{context}
+
+Tạo HƯỚNG DẪN SỬ DỤNG gồm:
+
+# Hướng dẫn sử dụng [Tên sản phẩm/tính năng]
+
+## 1. Giới thiệu
+- Mô tả tổng quan
+- Đối tượng sử dụng
+- Yêu cầu hệ thống
+
+## 2. Bắt đầu
+- Cài đặt/Thiết lập
+- Đăng nhập/Truy cập
+
+## 3. Hướng dẫn chi tiết
+### 3.1 [Tính năng 1]
+- Bước 1: ...
+- Bước 2: ...
+
+### 3.2 [Tính năng 2]
+...
+
+## 4. Câu hỏi thường gặp (FAQ)
+
+## 5. Xử lý sự cố
+
+## 6. Liên hệ hỗ trợ
+
+{requirements}</field>
+            <field name="output_format">markdown</field>
+            <field name="sequence">60</field>
+        </record>
+
+        <!-- Notice Template -->
+        <record id="template_notice" model="llm.document.template">
+            <field name="name">Thông báo</field>
+            <field name="code">notice</field>
+            <field name="category_id" ref="category_notice"/>
+            <field name="description">Soạn thông báo nội bộ</field>
+            <field name="system_prompt">Bạn là chuyên viên truyền thông nội bộ.
+Nhiệm vụ: Soạn thông báo rõ ràng, ngắn gọn, đầy đủ thông tin.
+
+Yêu cầu:
+- Tiêu đề thu hút, rõ ràng
+- Nội dung súc tích, dễ hiểu
+- Thông tin cần thiết: ai, cái gì, khi nào, ở đâu, như thế nào
+- Kêu gọi hành động nếu cần</field>
+            <field name="user_prompt_template">Dựa trên thông tin:
+
+{context}
+
+Soạn THÔNG BÁO theo mẫu:
+
+**THÔNG BÁO**
+V/v: [Trích yếu nội dung]
+
+Kính gửi: [Đối tượng nhận thông báo]
+
+[Nội dung thông báo]
+
+**Thông tin chi tiết:**
+- Thời gian:
+- Địa điểm:
+- Đối tượng áp dụng:
+- Yêu cầu thực hiện:
+
+Đề nghị [đối tượng] nghiêm túc thực hiện.
+
+Trân trọng./.
+
+{requirements}</field>
+            <field name="output_format">markdown</field>
+            <field name="sequence">70</field>
+        </record>
+    </data>
+</odoo>

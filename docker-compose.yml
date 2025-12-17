@@ -1,0 +1,59 @@
+version: '3.1'
+services:
+  # Service Database (Đã tích hợp sẵn Vector Store)
+  db:
+    image: pgvector/pgvector:pg16  # Dùng Postgres 16 kèm pgvector
+    container_name: odoo18_db
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo
+    volumes:
+      - odoo18-db-data:/var/lib/postgresql/data
+    restart: always
+
+  # Service Ollama (Local LLM)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: odoo18_ollama
+    volumes:
+      - ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: always
+
+  # Service Odoo 18
+  web:
+    build: .  # Thay vì dùng image gốc, ta sẽ build custom image (xem bước 2)
+    container_name: odoo18_web
+    depends_on:
+      - db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8069:8069" # Cổng Web
+      - "8072:8072" # Cổng Long-polling (Chat realtime)
+    volumes:
+      - odoo18-web-data:/var/lib/odoo
+      - ./config:/etc/odoo
+      - ./addons:/mnt/extra-addons  # Map folder code module AI của bạn vào đây
+    environment:
+      - HOST=db
+      - USER=odoo
+      - PASSWORD=odoo
+    restart: always
+
+  # Service Qdrant (Vector Database)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: odoo18_qdrant
+    # Không cần expose ports - chỉ dùng internal network
+    volumes:
+      - qdrant-data:/qdrant/storage
+    restart: always
+
+volumes:
+  odoo18-web-data:
+  odoo18-db-data:
+  ollama-data:
+  qdrant-data:

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Document Generator Menu under LLM root -->
+    <menuitem
+        id="llm_document_generator_menu"
+        name="Tạo tài liệu"
+        parent="llm.menu_llm_root"
+        sequence="50"/>
+
+    <!-- Generate Document Menu (Wizard) -->
+    <menuitem
+        id="llm_document_generator_menu_generate"
+        name="Tạo mới"
+        parent="llm_document_generator_menu"
+        action="llm_generate_document_wizard_action"
+        sequence="1"/>
+
+    <!-- Generated Documents Menu -->
+    <menuitem
+        id="llm_document_generator_menu_generations"
+        name="Tài liệu đã tạo"
+        parent="llm_document_generator_menu"
+        action="llm_document_generation_action"
+        sequence="10"/>
+
+    <!-- Templates Menu -->
+    <menuitem
+        id="llm_document_generator_menu_templates"
+        name="Mẫu tài liệu"
+        parent="llm_document_generator_menu"
+        action="llm_document_template_action"
+        sequence="20"/>
+
+    <!-- Categories Menu -->
+    <menuitem
+        id="llm_document_generator_menu_categories"
+        name="Thể loại"
+        parent="llm_document_generator_menu"
+        action="llm_document_category_action"
+        sequence="30"/>
+</odoo>
