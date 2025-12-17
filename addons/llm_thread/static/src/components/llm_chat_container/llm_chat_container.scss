@@ -1,4 +1,6 @@
 .o_LLMChatContainer {
+  background-color: #f8f9fa;
+
   // Force single column grid for composer (no avatar sidebar)
   .o-llm-composer-area .o-mail-Composer {
     grid-template-columns: 1fr !important;
@@ -9,52 +11,129 @@
   }
 
   .o-llm-sidebar {
-    flex-shrink: 0; // Prevent shrinking
-    min-width: 48px; // Minimum width when collapsed
-    transition: width 0.2s ease-in-out; // Smooth collapse/expand animation
+    flex-shrink: 0;
+    min-width: 48px;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #fff;
+    border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
 
     .o-llm-sidebar-header {
-      min-height: 60px; // Match chat header height
-    }
+      min-height: 56px;
+      background: linear-gradient(to bottom, #fff, #fafbfc);
 
-    .o-llm-thread-item {
-      transition: background-color 0.2s ease;
+      h6 {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #495057;
+        letter-spacing: 0.01em;
+      }
 
-      &.o-llm-thread-active {
-        background-color: var(--primary);
-        color: white;
+      .btn-primary {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.75rem;
+        border-radius: 0.375rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        transition: all 0.15s ease;
 
-        .text-muted {
-          color: rgba(255, 255, 255, 0.7) !important;
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+        }
+      }
+
+      .btn-secondary {
+        background-color: transparent;
+        border-color: rgba(0, 0, 0, 0.08);
+        color: #6c757d;
+
+        &:hover {
+          background-color: #f1f3f5;
+          border-color: rgba(0, 0, 0, 0.1);
         }
       }
     }
 
-    // Mobile: Slide-in modal pattern (from 16.0)
+    .o-llm-thread-item {
+      transition: all 0.15s ease;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+      margin: 0 0.5rem;
+      border-radius: 0.375rem;
+      margin-bottom: 0.25rem;
+
+      .fw-medium {
+        font-size: 0.875rem;
+        color: #212529;
+        font-weight: 500;
+      }
+
+      .text-muted {
+        font-size: 0.75rem;
+        color: #868e96 !important;
+      }
+
+      &:hover:not(.o-llm-thread-active) {
+        background-color: #f8f9fa;
+      }
+
+      &.o-llm-thread-active {
+        background-color: var(--primary);
+        color: white;
+        box-shadow: 0 2px 4px rgba(var(--primary-rgb, 0, 123, 255), 0.25);
+
+        .fw-medium {
+          color: #fff;
+        }
+
+        .text-muted {
+          color: rgba(255, 255, 255, 0.75) !important;
+        }
+      }
+    }
+
+    // Empty state styling
+    .text-center.text-muted {
+      padding: 2rem 1rem !important;
+
+      .fa-comments-o {
+        color: #dee2e6;
+        margin-bottom: 0.75rem;
+      }
+
+      div {
+        font-size: 0.875rem;
+        color: #6c757d;
+      }
+
+      small {
+        color: #adb5bd;
+      }
+    }
+
+    // Mobile: Slide-in modal pattern
     &.o-mobile {
       position: fixed;
       top: 0;
       left: 0;
       bottom: 0;
-      z-index: 1055; // Bootstrap modal z-index
+      z-index: 1055;
       width: 100%;
       max-width: 300px;
-      background-color: $o-view-background-color; // Odoo's view background (white)
-      transform: translateX(-100%); // Hidden off-screen to the left
+      background-color: #fff;
+      transform: translateX(-100%);
       transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
 
       &.o-visible {
-        transform: translateX(0); // Slide in
+        transform: translateX(0);
       }
 
       .o-llm-sidebar-header {
-        min-height: 60px;
+        min-height: 56px;
       }
 
-      // Very small screens: Make sidebar take 80% of screen width
       @media (max-width: 575px) {
-        max-width: 80%; // More reasonable width for very small screens
-        min-width: 250px; // But not too small
+        max-width: 85%;
+        min-width: 260px;
       }
     }
   }
@@ -66,12 +145,13 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1050; // Below sidebar, above content
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1050;
     opacity: 0;
     visibility: hidden;
     transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1),
       visibility 0ms linear 300ms;
+    backdrop-filter: blur(2px);
 
     &.o-visible {
       opacity: 1;
@@ -84,109 +164,247 @@
   // Match sidebar header height with chat header
   .o-llm-sidebar-header,
   .o-llm-thread-header {
-    min-height: 60px; // Ensure both headers have the same height
+    min-height: 56px;
 
-    // Mobile: Reduce header height
     @media (max-width: 767px) {
       min-height: 48px;
     }
   }
 
-  // Fix horizontal overflow on very small screens (< 576px)
+  // Fix horizontal overflow on very small screens
   @media (max-width: 575px) {
-    // Ensure flex items can shrink below content size
     & > * {
       min-width: 0;
     }
 
-    // Mobile header: Reduce padding and ensure buttons don't overflow
     .d-flex.align-items-center.p-2.border-bottom {
-      padding: 0.25rem !important; // Reduce padding from p-2
-      flex-wrap: nowrap; // Prevent wrapping
+      padding: 0.5rem !important;
+      flex-wrap: nowrap;
+      background-color: #fff;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
 
       .btn-sm {
-        padding: 0.25rem 0.5rem; // Smaller button padding
-        min-width: auto; // Remove any min-width
+        padding: 0.375rem 0.5rem;
+        min-width: auto;
+        border-radius: 0.375rem;
       }
 
       h6 {
-        font-size: 0.875rem; // Smaller font size
+        font-size: 0.875rem;
         margin-bottom: 0;
+        font-weight: 500;
       }
     }
   }
 
-  // Thread area mobile padding
+  // Main chat area
+  .flex-grow-1.d-flex.flex-column.h-100 {
+    background-color: #fff;
+    border-radius: 0;
+
+    @media (min-width: 768px) {
+      margin: 0.5rem;
+      margin-left: 0;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+  }
+
+  // Thread area
   .o-llm-thread-area {
-    @media (max-width: 767px) {
-      padding: 0.5rem !important;
-    }
-  }
+    background-color: #fff;
 
-  // Composer area mobile padding
-  .o-llm-composer-area {
-    @media (max-width: 767px) {
-      padding: 0.5rem !important;
-    }
-  }
-
-  // Thread list mobile optimization - larger touch targets
-  .o-llm-thread-item {
     @media (max-width: 767px) {
       padding: 0.75rem !important;
-      min-height: 60px; // Touch-friendly
+    }
+  }
+
+  // Composer area
+  .o-llm-composer-area {
+    background-color: #fff;
+    border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+    padding: 1rem !important;
+
+    @media (max-width: 767px) {
+      padding: 0.75rem !important;
+    }
+  }
+
+  // Streaming indicator
+  .o-llm-streaming-indicator {
+    background-color: #f8f9fa;
+    font-size: 0.8125rem;
+    color: #6c757d;
+    padding: 0.5rem 1rem !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
+
+    .fa-circle-o-notch {
+      margin-right: 0.375rem;
+    }
+  }
+
+  // Thread list mobile optimization
+  .o-llm-thread-item {
+    @media (max-width: 767px) {
+      padding: 0.875rem !important;
+      min-height: 64px;
+    }
+  }
+
+  // Empty state
+  .d-flex.justify-content-center.align-items-center.h-100.text-muted {
+    background-color: #fff;
+
+    .text-center {
+      .fa-robot {
+        color: #dee2e6;
+        margin-bottom: 1rem;
+      }
+
+      h5 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        color: #868e96;
+        font-size: 0.875rem;
+      }
+
+      .btn-primary {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(var(--primary-rgb, 0, 123, 255), 0.2);
+        transition: all 0.15s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(var(--primary-rgb, 0, 123, 255), 0.25);
+        }
+      }
     }
   }
 }
 
 // LLM Message enhancements
 .o-llm-message {
-  // Add any global LLM message styles here
+  margin-bottom: 0.75rem;
 
   &.o-llm-message-tool {
-    // Specific styles for tool messages
+    // Tool messages are already styled via .o_llm_tool_result
   }
 
   &.o-llm-message-assistant {
-    // Specific styles for assistant messages
+    .o-mail-Message-bubble {
+      background-color: #f8f9fa;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  &.o-llm-message-user {
+    .o-mail-Message-bubble {
+      background-color: var(--primary);
+      color: #fff;
+    }
   }
 }
 
 // Style images in LLM message bodies
 .o-mail-Message-body {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #212529;
+
   img {
     max-width: 512px;
     width: 100%;
     height: auto;
     display: block;
-    margin: 0.5rem 0;
+    margin: 0.75rem 0;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
-    // Mobile: Full width images
     @media (max-width: 767px) {
       max-width: 100%;
     }
   }
 
-  // Mobile: Smaller font size
+  // Code blocks styling
+  pre {
+    background-color: #f6f8fa;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+
+    code {
+      background: transparent;
+      padding: 0;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+  }
+
+  // Inline code
+  code:not(pre code) {
+    background-color: #f1f3f5;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    color: #e83e8c;
+  }
+
+  // Links
+  a {
+    color: var(--primary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  // Lists
+  ul, ol {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+
+    li {
+      margin-bottom: 0.25rem;
+    }
+  }
+
+  // Paragraphs
+  p {
+    margin-bottom: 0.75rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
   @media (max-width: 767px) {
     font-size: 0.875rem;
   }
 }
 
-// Tool call badges for assistant messages
-.o_llm_tool_calls {
-  .badge {
-    cursor: default;
-    font-size: 0.75rem;
+// Message author styling
+.o-mail-Message-author {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #495057;
+}
 
-    &:hover {
-      background-color: var(--bs-secondary) !important;
-    }
-  }
-
-  i.fa-cog {
-    opacity: 0.7;
-  }
+// Message timestamp styling
+.o-mail-Message-date {
+  font-size: 0.6875rem;
+  color: #adb5bd;
 }
 
 // Utility classes

@@ -1,23 +1,76 @@
 // Styles for LLM Tool Message Component
 .o_llm_tool_result {
-  border: 1px solid var(--border-color);
-  border-radius: 0.375rem;
-  padding: 0.75rem;
-  margin: 0.5rem 0;
-  background-color: var(--bs-gray-50);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0.5rem;
+  padding: 0;
+  margin: 0.75rem 0;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 
   .o_llm_tool_result_header {
     font-weight: 500;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 0.5rem;
-    margin-bottom: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    margin-bottom: 0;
+    background: linear-gradient(to right, #f8f9fa, #fff);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 0.8125rem;
+
+    .fa {
+      font-size: 0.875rem;
+    }
+
+    // Success icon
+    .fa-check-circle {
+      color: #28a745;
+    }
+
+    // Error icon
+    .fa-exclamation-circle {
+      color: #dc3545;
+    }
+
+    // Executing icon
+    .fa-spinner {
+      color: #6c757d;
+    }
+
+    strong {
+      color: #495057;
+      font-weight: 600;
+    }
+
+    .text-muted {
+      font-size: 0.6875rem;
+      opacity: 0.7;
+    }
+
+    .badge {
+      font-size: 0.625rem;
+      font-weight: 500;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+    }
   }
 
   .o_llm_tool_result_section {
+    padding: 0 0.875rem;
+
+    &:first-of-type {
+      padding-top: 0.5rem;
+    }
+
+    &:last-of-type {
+      padding-bottom: 0.75rem;
+    }
+
     button {
       cursor: pointer;
       border: none !important;
       box-shadow: none !important;
+      padding: 0.375rem 0 !important;
+      color: #6c757d;
+      transition: color 0.15s ease;
 
       &:hover {
         color: var(--bs-primary) !important;
@@ -27,6 +80,19 @@
         box-shadow: none !important;
         outline: none !important;
       }
+
+      .fa {
+        font-size: 0.625rem;
+        width: 0.75rem;
+        transition: transform 0.15s ease;
+      }
+
+      strong {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+      }
     }
   }
 
@@ -34,26 +100,74 @@
   .o_llm_tool_result_content {
     pre {
       white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 300px;
+      word-break: break-word;
+      max-height: 280px;
       margin-bottom: 0;
-      font-size: 0.875rem;
-      line-height: 1.4;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      padding: 0.75rem;
+      border-radius: 0.375rem;
+      background-color: #f8f9fa;
+      border: 1px solid rgba(0, 0, 0, 0.04);
 
       code {
-        color: inherit;
+        color: #24292e;
         background: transparent;
         padding: 0;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
       }
     }
   }
 
   .o_llm_tool_result_args pre {
-    max-height: 150px; // Smaller for args
+    max-height: 140px;
   }
 
-  // Error styling
-  .bg-danger-subtle {
-    background-color: rgba(var(--bs-danger-rgb), 0.1) !important;
+  // Error styling - more subtle
+  &.o_llm_tool_error {
+    border-color: rgba(220, 53, 69, 0.15);
+
+    .o_llm_tool_result_header {
+      background: linear-gradient(to right, #fff5f5, #fff);
+    }
+  }
+
+  .o_llm_tool_result_content {
+    .bg-danger-subtle {
+      background-color: #fff5f5 !important;
+      border-color: rgba(220, 53, 69, 0.12) !important;
+
+      code {
+        color: #c53030;
+      }
+    }
+  }
+}
+
+// Tool call badges styling - more refined
+.o_llm_tool_calls {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+
+  .badge {
+    cursor: default;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: #dee2e6 !important;
+    }
+
+    i.fa-cog {
+      opacity: 0.6;
+      font-size: 0.625rem;
+    }
   }
 }

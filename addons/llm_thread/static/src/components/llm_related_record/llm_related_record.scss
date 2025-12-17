@@ -2,41 +2,145 @@
   display: inline-block;
 
   .btn-group {
+    border-radius: 0.375rem;
+    overflow: hidden;
+
     .btn {
       white-space: nowrap;
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.625rem;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background-color: #fff;
+      color: #495057;
+      transition: all 0.15s ease;
 
       &:hover {
         z-index: 1;
+        background-color: #f8f9fa;
+        border-color: rgba(0, 0, 0, 0.1);
+      }
+
+      &:focus {
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255), 0.15);
+      }
+
+      .fa {
+        font-size: 0.75rem;
+        opacity: 0.7;
+      }
+    }
+
+    .btn-outline-primary {
+      border-color: var(--primary);
+      color: var(--primary);
+
+      &:hover {
+        background-color: var(--primary);
+        color: #fff;
       }
     }
 
     .text-truncate {
       display: inline-block;
       vertical-align: middle;
+      max-width: 150px;
     }
   }
 }
 
 .o_RecordPickerDialog {
-  .record-results {
-    .list-group-item {
-      cursor: pointer;
-      transition: background-color 0.15s ease-in-out;
+  .modal-content {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 1rem 1.25rem;
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .btn-close {
+      opacity: 0.5;
 
       &:hover {
-        background-color: var(--bs-light);
+        opacity: 1;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 1.25rem;
+  }
+
+  .modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 0.875rem 1.25rem;
+  }
+
+  // Form controls
+  .form-control, .form-select {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255), 0.15);
+      border-color: var(--primary);
+    }
+  }
+
+  .form-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.375rem;
+  }
+
+  .record-results {
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 0.375rem;
+
+    .list-group-item {
+      cursor: pointer;
+      transition: all 0.15s ease;
+      padding: 0.625rem 0.875rem;
+      border: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      font-size: 0.875rem;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: #f8f9fa;
       }
 
       &.active {
-        background-color: var(--bs-primary);
-        color: var(--bs-white);
-        border-color: var(--bs-primary);
+        background-color: var(--primary);
+        color: #fff;
 
         .text-muted {
-          color: rgba(255, 255, 255, 0.7) !important;
+          color: rgba(255, 255, 255, 0.75) !important;
         }
       }
     }
+  }
+
+  .alert {
+    font-size: 0.8125rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
   }
 
   .spinner-border {

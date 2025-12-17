@@ -24,14 +24,14 @@
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" type="object" name="action_view_generations" icon="fa-file-text-o">
-                            <field name="generation_count" widget="statinfo" string="Đã tạo"/>
+                            <field name="generation_count" widget="statinfo" string="Generated"/>
                         </button>
                     </div>
-                    <widget name="web_ribbon" title="Đã Embed" bg_color="text-bg-success"
+                    <widget name="web_ribbon" title="Embedded" bg_color="text-bg-success"
                             invisible="not is_embedded"/>
                     <div class="oe_title">
                         <h1>
-                            <field name="name" placeholder="Tên mẫu tài liệu"/>
+                            <field name="name" placeholder="Template name"/>
                         </h1>
                     </div>
                     <group>
@@ -44,20 +44,20 @@
                     </group>
 
                     <notebook>
-                        <!-- Tab 1: Nội dung mẫu -->
-                        <page string="Nội dung mẫu" name="sample">
+                        <!-- Tab 1: Sample Content -->
+                        <page string="Sample Content" name="sample">
                             <!-- Upload section -->
                             <group>
-                                <group string="1. Upload file mẫu">
+                                <group string="1. Upload sample file">
                                     <field name="sample_file" filename="sample_filename"/>
                                     <field name="sample_filename" invisible="1"/>
                                     <div class="text-muted small" colspan="2">
-                                        Hỗ trợ: DOCX, PDF, TXT, MD - Nội dung sẽ được tự động trích xuất
+                                        Supported: DOCX, PDF, TXT, MD - Content will be automatically extracted
                                     </div>
                                 </group>
-                                <group string="2. Chọn Collection để Embed">
+                                <group string="2. Select Collection to Embed">
                                     <field name="knowledge_collection_id"
-                                           placeholder="Chọn collection..."
+                                           placeholder="Select collection..."
                                            options="{'no_create': False, 'no_quick_create': True}"/>
                                     <field name="knowledge_resource_id" readonly="1"
                                            invisible="not knowledge_resource_id"/>
@@ -66,60 +66,60 @@
 
                             <!-- Status indicator -->
                             <div class="alert alert-info" invisible="sample_content or is_embedded">
-                                <strong>Upload file mẫu</strong> để bắt đầu. Nội dung sẽ được tự động trích xuất.
+                                <strong>Upload a sample file</strong> to get started. Content will be automatically extracted.
                             </div>
 
                             <div class="alert alert-warning" invisible="not sample_content or knowledge_collection_id or is_embedded">
-                                <strong>Chọn Knowledge Collection</strong> rồi bấm <b>"Embed Template"</b> để hoàn tất.
+                                <strong>Select a Knowledge Collection</strong> then click <b>"Embed Template"</b> to complete.
                             </div>
 
                             <div class="alert alert-primary" invisible="not sample_content or not knowledge_collection_id or is_embedded">
-                                <strong>Bấm "Embed Template"</strong> ở header để lưu template vào Knowledge Base.
+                                <strong>Click "Embed Template"</strong> in the header to save template to Knowledge Base.
                                 <br/>
-                                <small class="text-muted">Giúp tiết kiệm ~70% tokens khi generate tài liệu.</small>
+                                <small class="text-muted">Saves ~70% tokens when generating documents.</small>
                             </div>
 
                             <!-- Success message when embedded -->
                             <div class="alert alert-success" invisible="not is_embedded">
-                                <strong>Template đã được embed!</strong>
-                                Khi generate, hệ thống sẽ tự động tìm phần mẫu phù hợp.
+                                <strong>Template has been embedded!</strong>
+                                When generating, the system will automatically find the relevant sample parts.
                                 <br/>
-                                <small class="text-muted">Nếu thay đổi nội dung, bấm "Re-embed" để cập nhật.</small>
+                                <small class="text-muted">If you change the content, click "Re-embed" to update.</small>
                             </div>
 
                             <!-- Extracted content (readonly display or editable) -->
-                            <group string="Nội dung đã trích xuất" invisible="not sample_content">
+                            <group string="Extracted Content" invisible="not sample_content">
                                 <field name="sample_content" nolabel="1"
                                        style="min-height: 300px;"/>
                             </group>
                         </page>
 
-                        <!-- Tab 2: Cấu hình AI -->
-                        <page string="Cấu hình AI" name="prompts">
+                        <!-- Tab 2: AI Configuration -->
+                        <page string="AI Configuration" name="prompts">
                             <group>
-                                <field name="system_prompt" placeholder="Hướng dẫn cho AI về vai trò và cách viết..."/>
+                                <field name="system_prompt" placeholder="Instructions for AI about role and writing style..."/>
                             </group>
                             <group>
-                                <field name="user_prompt_template" placeholder="Mẫu prompt gửi đến AI..."/>
+                                <field name="user_prompt_template" placeholder="Prompt template to send to AI..."/>
                             </group>
                             <div class="alert alert-info">
-                                <strong>Biến có thể dùng trong User Prompt:</strong>
+                                <strong>Variables available in User Prompt:</strong>
                                 <ul class="mb-0 mt-2">
-                                    <li><code>{sample}</code> - Nội dung mẫu (hoặc chunks liên quan nếu đã embed)</li>
-                                    <li><code>{context}</code> - Yêu cầu từ người dùng</li>
+                                    <li><code>{sample}</code> - Sample content (or relevant chunks if embedded)</li>
+                                    <li><code>{context}</code> - User requirements</li>
                                 </ul>
                             </div>
                         </page>
 
-                        <!-- Tab 3: Thông tin khác -->
-                        <page string="Thông tin" name="info">
+                        <!-- Tab 3: Other Information -->
+                        <page string="Information" name="info">
                             <group>
-                                <group string="Thông tin chung">
+                                <group string="General Information">
                                     <field name="code"/>
                                     <field name="sequence"/>
                                     <field name="description"/>
                                 </group>
-                                <group string="Thống kê">
+                                <group string="Statistics">
                                     <field name="generation_count" readonly="1"/>
                                     <field name="create_date" readonly="1"/>
                                     <field name="write_date" readonly="1"/>
@@ -144,7 +144,7 @@
                 <field name="category_id"/>
                 <field name="is_embedded" widget="boolean" string="RAG"/>
                 <field name="knowledge_collection_id" optional="hide"/>
-                <field name="generation_count" string="Đã tạo"/>
+                <field name="generation_count" string="Generated"/>
                 <field name="active" column_invisible="1"/>
             </list>
         </field>
@@ -172,7 +172,7 @@
                         </div>
                         <div class="mt-2">
                             <span class="badge text-bg-info">
-                                <field name="generation_count"/> đã tạo
+                                <field name="generation_count"/> generated
                             </span>
                         </div>
                     </t>
@@ -191,14 +191,14 @@
                 <field name="category_id"/>
                 <field name="knowledge_collection_id"/>
                 <separator/>
-                <filter string="Đã Embed (RAG)" name="embedded" domain="[('is_embedded', '=', True)]"/>
-                <filter string="Chưa Embed" name="not_embedded" domain="[('is_embedded', '=', False)]"/>
+                <filter string="Embedded (RAG)" name="embedded" domain="[('is_embedded', '=', True)]"/>
+                <filter string="Not Embedded" name="not_embedded" domain="[('is_embedded', '=', False)]"/>
                 <separator/>
-                <filter string="Đã lưu trữ" name="inactive" domain="[('active', '=', False)]"/>
-                <group expand="0" string="Nhóm theo">
-                    <filter string="Thể loại" name="group_category" context="{'group_by': 'category_id'}"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Category" name="group_category" context="{'group_by': 'category_id'}"/>
                     <filter string="Collection" name="group_collection" context="{'group_by': 'knowledge_collection_id'}"/>
-                    <filter string="Trạng thái RAG" name="group_embedded" context="{'group_by': 'is_embedded'}"/>
+                    <filter string="RAG Status" name="group_embedded" context="{'group_by': 'is_embedded'}"/>
                 </group>
             </search>
         </field>
@@ -206,19 +206,19 @@
 
     <!-- Template Action -->
     <record id="llm_document_template_action" model="ir.actions.act_window">
-        <field name="name">Mẫu tài liệu</field>
+        <field name="name">Document Templates</field>
         <field name="res_model">llm.document.template</field>
         <field name="view_mode">list,kanban,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Tạo mẫu tài liệu đầu tiên!
+                Create your first document template!
             </p>
             <p>
-                Upload hoặc nhập nội dung văn bản mẫu để AI tham khảo khi tạo tài liệu mới.
+                Upload or enter sample text content for AI to reference when generating new documents.
             </p>
             <p class="text-muted">
-                <b>Tip:</b> Sử dụng tính năng <b>RAG (Embed Template)</b> để tiết kiệm tokens
-                và tăng tốc độ generate cho các template dài.
+                <b>Tip:</b> Use the <b>RAG (Embed Template)</b> feature to save tokens
+                and speed up generation for long templates.
             </p>
         </field>
     </record>

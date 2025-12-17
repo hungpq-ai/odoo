@@ -3,64 +3,64 @@
     <data noupdate="1">
         <!-- Main Categories -->
         <record id="category_administrative" model="llm.document.category">
-            <field name="name">Văn bản hành chính</field>
+            <field name="name">Administrative Documents</field>
             <field name="code">administrative</field>
-            <field name="description">Các loại văn bản hành chính thông dụng</field>
+            <field name="description">Common administrative document types</field>
             <field name="sequence">10</field>
         </record>
 
         <record id="category_report" model="llm.document.category">
-            <field name="name">Báo cáo</field>
+            <field name="name">Reports</field>
             <field name="code">report</field>
-            <field name="description">Các loại báo cáo công việc, dự án</field>
+            <field name="description">Work and project reports</field>
             <field name="sequence">20</field>
         </record>
 
         <record id="category_contract" model="llm.document.category">
-            <field name="name">Hợp đồng</field>
+            <field name="name">Contracts</field>
             <field name="code">contract</field>
-            <field name="description">Các loại hợp đồng kinh tế, lao động</field>
+            <field name="description">Business and labor contracts</field>
             <field name="sequence">30</field>
         </record>
 
         <record id="category_letter" model="llm.document.category">
-            <field name="name">Công văn / Thư</field>
+            <field name="name">Official Letters</field>
             <field name="code">letter</field>
-            <field name="description">Công văn, thư từ đối ngoại</field>
+            <field name="description">Official correspondence and letters</field>
             <field name="sequence">40</field>
         </record>
 
         <record id="category_proposal" model="llm.document.category">
-            <field name="name">Đề xuất / Tờ trình</field>
+            <field name="name">Proposals</field>
             <field name="code">proposal</field>
-            <field name="description">Đề xuất, tờ trình, phương án</field>
+            <field name="description">Proposals and project plans</field>
             <field name="sequence">50</field>
         </record>
 
         <record id="category_technical" model="llm.document.category">
-            <field name="name">Tài liệu kỹ thuật</field>
+            <field name="name">Technical Documentation</field>
             <field name="code">technical</field>
-            <field name="description">Tài liệu hướng dẫn, kỹ thuật</field>
+            <field name="description">Technical guides and documentation</field>
             <field name="sequence">60</field>
         </record>
 
         <!-- Sub-categories for Administrative -->
         <record id="category_decision" model="llm.document.category">
-            <field name="name">Quyết định</field>
+            <field name="name">Decisions</field>
             <field name="code">decision</field>
             <field name="parent_id" ref="category_administrative"/>
             <field name="sequence">1</field>
         </record>
 
         <record id="category_notice" model="llm.document.category">
-            <field name="name">Thông báo</field>
+            <field name="name">Notices</field>
             <field name="code">notice</field>
             <field name="parent_id" ref="category_administrative"/>
             <field name="sequence">2</field>
         </record>
 
         <record id="category_minute" model="llm.document.category">
-            <field name="name">Biên bản</field>
+            <field name="name">Meeting Minutes</field>
             <field name="code">minute</field>
             <field name="parent_id" ref="category_administrative"/>
             <field name="sequence">3</field>
@@ -68,21 +68,21 @@
 
         <!-- Sub-categories for Report -->
         <record id="category_progress_report" model="llm.document.category">
-            <field name="name">Báo cáo tiến độ</field>
+            <field name="name">Progress Reports</field>
             <field name="code">progress_report</field>
             <field name="parent_id" ref="category_report"/>
             <field name="sequence">1</field>
         </record>
 
         <record id="category_summary_report" model="llm.document.category">
-            <field name="name">Báo cáo tổng kết</field>
+            <field name="name">Summary Reports</field>
             <field name="code">summary_report</field>
             <field name="parent_id" ref="category_report"/>
             <field name="sequence">2</field>
         </record>
 
         <record id="category_analysis_report" model="llm.document.category">
-            <field name="name">Báo cáo phân tích</field>
+            <field name="name">Analysis Reports</field>
             <field name="code">analysis_report</field>
             <field name="parent_id" ref="category_report"/>
             <field name="sequence">3</field>
@@ -90,14 +90,14 @@
 
         <!-- Sub-categories for Technical -->
         <record id="category_user_guide" model="llm.document.category">
-            <field name="name">Hướng dẫn sử dụng</field>
+            <field name="name">User Guides</field>
             <field name="code">user_guide</field>
             <field name="parent_id" ref="category_technical"/>
             <field name="sequence">1</field>
         </record>
 
         <record id="category_api_doc" model="llm.document.category">
-            <field name="name">Tài liệu API</field>
+            <field name="name">API Documentation</field>
             <field name="code">api_doc</field>
             <field name="parent_id" ref="category_technical"/>
             <field name="sequence">2</field>

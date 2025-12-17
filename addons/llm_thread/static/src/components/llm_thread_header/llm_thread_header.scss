@@ -1,17 +1,112 @@
 .o-llm-thread-header {
-  min-height: 60px;
+  min-height: 56px;
+  background-color: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 1rem;
+
+  // Thread name
+  h6, .h6 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 0;
+
+    &:hover {
+      color: var(--primary);
+    }
+  }
+
+  // Input for editing thread name
+  input.form-control {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255), 0.15);
+    }
+  }
+
+  // Dropdown buttons styling
+  .dropdown {
+    .btn {
+      font-size: 0.8125rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background-color: #fff;
+      color: #495057;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background-color: #f8f9fa;
+        border-color: rgba(0, 0, 0, 0.12);
+      }
+
+      &:focus {
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255), 0.15);
+      }
+
+      .fa {
+        font-size: 0.75rem;
+        opacity: 0.7;
+      }
+    }
+
+    .dropdown-menu {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+      padding: 0.375rem;
+      min-width: 200px;
+
+      .dropdown-item {
+        border-radius: 0.25rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem;
+        color: #495057;
+
+        &:hover {
+          background-color: #f8f9fa;
+        }
+
+        &.active {
+          background-color: var(--primary);
+          color: #fff;
+        }
+      }
+    }
+  }
+
+  // Search input in dropdown
+  .dropdown-menu input.form-control {
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.375rem;
+  }
+
+  // Labels
+  .form-label, small.text-muted {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #868e96;
+  }
 
   // Mobile: Reduced height and padding
   @media (max-width: 767px) {
     min-height: 48px;
-    padding: 0.5rem !important;
+    padding: 0.5rem 0.75rem !important;
 
-    // Truncate thread name on mobile
     h6 {
-      max-width: calc(100% - 50px); // Leave room for hamburger button
+      max-width: calc(100% - 50px);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-size: 0.875rem;
     }
   }
 
@@ -19,11 +114,11 @@
   .o-llm-mobile-controls {
     .form-label {
       font-weight: 600;
-      margin-bottom: 0.25rem;
-      color: var(--bs-secondary);
+      margin-bottom: 0.375rem;
+      color: #6c757d;
+      font-size: 0.75rem;
     }
 
-    // Full-width dropdowns
     .dropdown {
       width: 100%;
 
@@ -36,15 +131,32 @@
 
     // Tool checkboxes
     .form-check {
-      padding: 0.5rem;
+      padding: 0.625rem 0.75rem;
       margin: 0;
+      border-radius: 0.25rem;
+      transition: background-color 0.15s ease;
 
       &:hover {
-        background-color: var(--bs-light);
+        background-color: #f8f9fa;
       }
 
       .form-check-input {
-        margin-top: 0.25rem;
+        margin-top: 0.1875rem;
+        border-radius: 0.25rem;
+
+        &:checked {
+          background-color: var(--primary);
+          border-color: var(--primary);
+        }
+
+        &:focus {
+          box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 0, 123, 255), 0.15);
+        }
+      }
+
+      .form-check-label {
+        font-size: 0.8125rem;
+        color: #495057;
       }
     }
   }

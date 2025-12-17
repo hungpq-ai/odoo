@@ -8,26 +8,26 @@ class GenerateDocumentWizard(models.TransientModel):
     # Template selection (includes category)
     template_id = fields.Many2one(
         "llm.document.template",
-        string="Loại tài liệu",
+        string="Document Type",
         required=True,
     )
     category_id = fields.Many2one(
         related="template_id.category_id",
-        string="Thể loại",
+        string="Category",
         readonly=True,
     )
 
     # Requirements
     requirements = fields.Text(
-        string="Yêu cầu",
+        string="Requirements",
         required=True,
-        help="Mô tả yêu cầu cho tài liệu cần tạo",
+        help="Describe the requirements for the document to be generated",
     )
 
     # LLM Model Selection
     model_id = fields.Many2one(
         "llm.model",
-        string="Model AI",
+        string="AI Model",
         domain="[('model_use', 'in', ['chat', 'completion'])]",
         required=True,
     )
@@ -63,10 +63,10 @@ class GenerateDocumentWizard(models.TransientModel):
         generation = self.env["llm.document.generation"].create(vals)
 
         # Return action to view the generation form
-        # User will click "Tạo" button there to see loading
+        # User will click "Generate" button there to see loading
         return {
             "type": "ir.actions.act_window",
-            "name": "Tài liệu đã tạo",
+            "name": "Generated Document",
             "res_model": "llm.document.generation",
             "res_id": generation.id,
             "view_mode": "form",
@@ -96,7 +96,7 @@ class GenerateDocumentWizard(models.TransientModel):
         # Return action to view the generation
         return {
             "type": "ir.actions.act_window",
-            "name": "Tài liệu đã tạo",
+            "name": "Generated Document",
             "res_model": "llm.document.generation",
             "res_id": generation.id,
             "view_mode": "form",

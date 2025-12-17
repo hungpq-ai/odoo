@@ -15,54 +15,54 @@ class DocumentGeneration(models.Model):
     name = fields.Char(required=True, tracking=True)
     template_id = fields.Many2one(
         "llm.document.template",
-        string="Loại tài liệu",
+        string="Document Type",
         required=True,
         tracking=True,
         ondelete="restrict",
     )
     category_id = fields.Many2one(
         related="template_id.category_id",
-        string="Thể loại",
+        string="Category",
         store=True,
     )
 
     # User input - this is the main content for generation
     requirements = fields.Text(
-        string="Yêu cầu",
+        string="Requirements",
         required=True,
-        help="Yêu cầu chi tiết cho tài liệu cần tạo",
+        help="Detailed requirements for the document to be generated",
     )
 
     # Generated content
-    generated_content = fields.Html(string="Nội dung")
+    generated_content = fields.Html(string="Content")
     generated_markdown = fields.Text(string="Markdown")
 
     # Status
     state = fields.Selection(
         [
-            ("draft", "Nháp"),
-            ("generating", "Đang tạo"),
-            ("review", "Đang review"),
-            ("done", "Hoàn thành"),
-            ("error", "Lỗi"),
+            ("draft", "Draft"),
+            ("generating", "Generating"),
+            ("review", "In Review"),
+            ("done", "Done"),
+            ("error", "Error"),
         ],
         default="draft",
         tracking=True,
     )
-    error_message = fields.Text(string="Thông báo lỗi", readonly=True)
+    error_message = fields.Text(string="Error Message", readonly=True)
 
     # Review fields
     review_feedback = fields.Text(
-        string="Góp ý chỉnh sửa",
-        help="Nhập góp ý để AI cải thiện tài liệu",
+        string="Review Feedback",
+        help="Enter feedback for AI to improve the document",
     )
-    review_count = fields.Integer(string="Số lần review", default=0)
-    review_history = fields.Html(string="Lịch sử review", readonly=True, sanitize=False)
+    review_count = fields.Integer(string="Review Count", default=0)
+    review_history = fields.Html(string="Review History", readonly=True, sanitize=False)
 
     # LLM Selection
     selected_model_id = fields.Many2one(
         "llm.model",
-        string="Model AI",
+        string="AI Model",
         domain="[('model_use', 'in', ['chat', 'completion'])]",
         required=True,
     )
@@ -100,29 +100,29 @@ class DocumentGeneration(models.Model):
         # Use RAG if template is embedded, otherwise use full sample
         sample_content = template.get_relevant_sample(requirements, limit=3)
 
-        outline_prompt = f"""Dựa trên yêu cầu sau, hãy tạo OUTLINE (dàn ý) cho tài liệu.
+        outline_prompt = f"""Based on the following requirements, create an OUTLINE for the document.
 
-YÊU CẦU:
+REQUIREMENTS:
 {requirements}
 
-MẪU TÀI LIỆU (tham khảo cấu trúc):
-{sample_content or "(Không có mẫu)"}
+DOCUMENT TEMPLATE (for structure reference):
+{sample_content or "(No template)"}
 
-QUY TẮC QUAN TRỌNG:
-- CHỈ liệt kê các PHẦN CHÍNH (major sections), KHÔNG liệt kê từng mục nhỏ
-- Tối đa 5-8 sections cho toàn bộ tài liệu
-- Mỗi section phải là một phần lớn, bao gồm nhiều nội dung bên trong
-- VÍ DỤ ĐÚNG: "1. Giới thiệu dự án" (bao gồm tên, mã, phiên bản, mục tiêu...)
-- VÍ DỤ SAI: "1. Tên dự án", "2. Mã dự án", "3. Phiên bản" (quá chi tiết)
+IMPORTANT RULES:
+- List ONLY MAJOR sections, NOT individual items
+- Maximum 5-8 sections for the entire document
+- Each section should be a major part containing multiple items
+- CORRECT EXAMPLE: "1. Project Introduction" (includes name, code, version, objectives...)
+- WRONG EXAMPLE: "1. Project Name", "2. Project Code", "3. Version" (too detailed)
 
-Trả về danh sách theo format:
-1. [Tên phần chính 1]: [Mô tả ngắn về nội dung bao gồm]
-2. [Tên phần chính 2]: [Mô tả ngắn về nội dung bao gồm]
+Return a list in this format:
+1. [Major Section 1]: [Brief description of contents]
+2. [Major Section 2]: [Brief description of contents]
 ...
 
-CHỈ trả về danh sách 5-8 phần chính, KHÔNG viết nội dung chi tiết."""
+ONLY return a list of 5-8 major sections, DO NOT write detailed content."""
 
-        return self._call_llm(model, "Bạn là chuyên gia lập dàn ý tài liệu. Chỉ tạo outline với 5-8 phần chính.", outline_prompt)
+        return self._call_llm(model, "You are a document outline expert. Only create outlines with 5-8 major sections.", outline_prompt)
 
     def _generate_section(self, model, template, requirements, section_info, previous_sections=""):
         """Generate content for a single section using RAG"""
@@ -132,33 +132,39 @@ CHỈ trả về danh sách 5-8 phần chính, KHÔNG viết nội dung chi ti�
         relevant_sample = template.get_relevant_sample(section_info, limit=3)
 
         # Get current date for real-time info
-        today = datetime.now().strftime("%d/%m/%Y")
+        today = datetime.now().strftime("%Y-%m-%d")
 
-        section_prompt = f"""Viết NỘI DUNG CHI TIẾT cho section sau trong tài liệu.
+        section_prompt = f"""Write DETAILED CONTENT for the following section in the document.
 
-THÔNG TIN TỔNG QUAN:
+OVERVIEW:
 {requirements}
 
-SECTION CẦN VIẾT:
+SECTION TO WRITE:
 {section_info}
 
-{"CÁC SECTION TRƯỚC ĐÓ (để đảm bảo liên kết):" + chr(10) + previous_sections if previous_sections else ""}
+{"PREVIOUS SECTIONS (for continuity):" + chr(10) + previous_sections if previous_sections else ""}
 
-MẪU THAM KHẢO (phần liên quan):
-{relevant_sample or "(Không có mẫu)"}
+REFERENCE TEMPLATE (relevant parts):
+{relevant_sample or "(No template)"}
 
-NGÀY HIỆN TẠI: {today}
+CURRENT DATE: {today}
 
-YÊU CẦU:
-- Viết chi tiết, đầy đủ nội dung cho section này
-- Sử dụng Markdown format
-- Giữ nguyên cấu trúc format của mẫu (table, list, heading...)
-- KHÔNG lặp lại nội dung từ các section trước
-- Nếu có trường ngày tháng (ngày cập nhật, ngày tạo...), sử dụng ngày hiện tại: {today}
-- KHI TẠO BẢNG MARKDOWN: LUÔN có dòng separator sau header, ví dụ:
-  | Cột 1 | Cột 2 | Cột 3 |
-  |-------|-------|-------|
-  | Dữ liệu 1 | Dữ liệu 2 | Dữ liệu 3 |"""
+REQUIREMENTS:
+- Write detailed, complete content for this section
+- Use Markdown format
+- Keep the same structure format as the template (table, list, heading...)
+- DO NOT repeat content from previous sections
+- For date fields (update date, creation date...), use current date: {today}
+- WHEN CREATING MARKDOWN TABLES: ALWAYS include separator line after header, example:
+  | Column 1 | Column 2 | Column 3 |
+  |----------|----------|----------|
+  | Data 1 | Data 2 | Data 3 |
+
+IMPORTANT: Return ONLY the section content. DO NOT include:
+- Introductory sentences like "Here is the content for..." or "Below is..."
+- Meta-commentary about what you're writing
+- Explanations before or after the content
+Start directly with the section heading or content."""
 
         return self._call_llm(model, template.system_prompt, section_prompt)
 
@@ -350,16 +356,16 @@ YÊU CẦU:
                 template = record.template_id
                 model = record.selected_model_id
                 if not model:
-                    raise UserError("Vui lòng chọn Model AI.")
+                    raise UserError("Please select an AI Model.")
 
                 # Step 1: Generate outline
                 _logger.info(f"Generating outline for document {record.id}")
-                record.message_post(body="Đang tạo dàn ý...", message_type="notification")
+                record.message_post(body="Creating outline...", message_type="notification")
                 record._cr.commit()
 
                 outline = record._generate_outline(model, template, record.requirements)
                 if not outline:
-                    raise UserError("Không thể tạo dàn ý")
+                    raise UserError("Could not create outline")
 
                 # Parse sections from outline
                 sections = []
@@ -379,7 +385,7 @@ YÊU CẦU:
                 for i, section in enumerate(sections):
                     _logger.info(f"Generating section {i+1}/{len(sections)}: {section[:50]}...")
                     record.message_post(
-                        body=f"Đang tạo phần {i+1}/{len(sections)}: {section[:50]}...",
+                        body=f"Generating section {i+1}/{len(sections)}: {section[:50]}...",
                         message_type="notification"
                     )
                     record._cr.commit()
@@ -405,18 +411,18 @@ YÊU CẦU:
                     record.generated_content = record._convert_markdown_to_html(full_markdown)
                     record.state = "done"
                     record.message_post(
-                        body=f"Tạo tài liệu thành công! ({len(sections)} phần)",
+                        body=f"Document generated successfully! ({len(sections)} sections)",
                         message_type="notification",
                     )
                 else:
-                    raise UserError("Không tạo được nội dung")
+                    raise UserError("Could not generate content")
 
             except Exception as e:
                 _logger.error(f"Error generating document {record.id}: {str(e)}")
                 record.state = "error"
                 record.error_message = str(e)
                 record.message_post(
-                    body=f"Lỗi tạo tài liệu: {str(e)}",
+                    body=f"Error generating document: {str(e)}",
                     message_type="notification",
                 )
 
@@ -435,7 +441,7 @@ YÊU CẦU:
         self.ensure_one()
         self.state = "review"
         self.message_post(
-            body="Bắt đầu review tài liệu. Nhập góp ý và bấm 'Áp dụng góp ý' để AI cải thiện.",
+            body="Started document review. Enter feedback and click 'Apply Feedback' for AI to improve.",
             message_type="notification",
         )
 
@@ -446,14 +452,14 @@ YÊU CẦU:
         self.ensure_one()
 
         if not self.review_feedback:
-            raise UserError("Vui lòng nhập góp ý chỉnh sửa trước khi áp dụng.")
+            raise UserError("Please enter review feedback before applying.")
 
         if not self.generated_markdown:
-            raise UserError("Không có nội dung để chỉnh sửa.")
+            raise UserError("No content to edit.")
 
         model = self.selected_model_id
         if not model:
-            raise UserError("Vui lòng chọn Model AI.")
+            raise UserError("Please select an AI Model.")
 
         try:
             self.state = "generating"
@@ -461,27 +467,27 @@ YÊU CẦU:
 
             today = datetime.now().strftime("%d/%m/%Y")
 
-            review_prompt = f"""Bạn được giao nhiệm vụ CHỈNH SỬA tài liệu dựa trên góp ý của người dùng.
+            review_prompt = f"""You are tasked with EDITING the document based on user feedback.
 
-TÀI LIỆU HIỆN TẠI:
+CURRENT DOCUMENT:
 {self.generated_markdown}
 
-GÓP Ý CHỈNH SỬA:
+REVIEW FEEDBACK:
 {self.review_feedback}
 
-NGÀY HIỆN TẠI: {today}
+CURRENT DATE: {today}
 
-YÊU CẦU:
-1. Đọc kỹ góp ý và áp dụng các thay đổi được yêu cầu
-2. GIỮ NGUYÊN các phần không được đề cập trong góp ý
-3. Giữ format Markdown
-4. Giữ cấu trúc bảng, heading, list như cũ
-5. Nếu góp ý yêu cầu thêm/sửa nội dung, hãy thực hiện phù hợp với ngữ cảnh
-6. Cập nhật ngày tháng nếu cần: {today}
+REQUIREMENTS:
+1. Read the feedback carefully and apply the requested changes
+2. KEEP UNCHANGED the parts not mentioned in the feedback
+3. Maintain Markdown format
+4. Keep the table, heading, and list structure as before
+5. If feedback requests adding/modifying content, do so appropriately in context
+6. Update dates if needed: {today}
 
-Trả về TÀI LIỆU ĐÃ CHỈNH SỬA HOÀN CHỈNH (không giải thích, chỉ trả về nội dung)."""
+Return the COMPLETE EDITED DOCUMENT (no explanations, only return the content)."""
 
-            system_prompt = "Bạn là chuyên gia chỉnh sửa văn bản. Áp dụng chính xác các góp ý mà không làm mất nội dung khác."
+            system_prompt = "You are a document editing expert. Apply feedback precisely without losing other content."
 
             revised_content = self._call_llm(model, system_prompt, review_prompt)
 
@@ -506,16 +512,16 @@ Trả về TÀI LIỆU ĐÃ CHỈNH SỬA HOÀN CHỈNH (không giải thích, c
                 self.state = "done"
 
                 self.message_post(
-                    body=f"Đã áp dụng góp ý (lần {self.review_count}). Tài liệu đã được cập nhật.",
+                    body=f"Feedback applied (review #{self.review_count}). Document has been updated.",
                     message_type="notification",
                 )
             else:
-                raise UserError("Không thể áp dụng góp ý. Vui lòng thử lại.")
+                raise UserError("Could not apply feedback. Please try again.")
 
         except Exception as e:
             _logger.error(f"Error applying review: {str(e)}")
             self.state = "review"
-            raise UserError(f"Lỗi khi áp dụng góp ý: {str(e)}")
+            raise UserError(f"Error applying feedback: {str(e)}")
 
     def action_approve_document(self):
         """Approve document and finish review"""
@@ -523,7 +529,7 @@ Trả về TÀI LIỆU ĐÃ CHỈNH SỬA HOÀN CHỈNH (không giải thích, c
         self.state = "done"
         self.review_feedback = False
         self.message_post(
-            body="Tài liệu đã được duyệt.",
+            body="Document has been approved.",
             message_type="notification",
         )
 
@@ -628,7 +634,7 @@ Trả về TÀI LIỆU ĐÃ CHỈNH SỬA HOÀN CHỈNH (không giải thích, c
         """Export as DOCX file with table support"""
         self.ensure_one()
         if not self.generated_markdown:
-            raise UserError("Không có nội dung để xuất")
+            raise UserError("No content to export")
 
         import base64
         import io
@@ -639,7 +645,7 @@ Trả về TÀI LIỆU ĐÃ CHỈNH SỬA HOÀN CHỈNH (không giải thích, c
             from docx.shared import Pt, Inches
             from docx.enum.text import WD_ALIGN_PARAGRAPH
         except ImportError:
-            raise UserError("Cần cài đặt thư viện python-docx để xuất file DOCX")
+            raise UserError("python-docx library is required to export DOCX files")
 
         # Create DOCX document
         doc = Document()
@@ -717,7 +723,7 @@ Trả về TÀI LIỆU ĐÃ CHỈNH SỬA HOÀN CHỈNH (không giải thích, c
         """Export as markdown file"""
         self.ensure_one()
         if not self.generated_markdown:
-            raise UserError("Không có nội dung để xuất")
+            raise UserError("No content to export")
 
         import base64
 
@@ -847,7 +853,7 @@ Trả về TÀI LIỆU ĐÃ CHỈNH SỬA HOÀN CHỈNH (không giải thích, c
         """Export as PDF file using wkhtmltopdf"""
         self.ensure_one()
         if not self.generated_content:
-            raise UserError("Không có nội dung để xuất")
+            raise UserError("No content to export")
 
         import base64
         import subprocess
@@ -882,7 +888,7 @@ Trả về TÀI LIỆU ĐÃ CHỈNH SỬA HOÀN CHỈNH (không giải thích, c
 
             if not os.path.exists(pdf_path):
                 _logger.error(f"wkhtmltopdf error: {result.stderr}")
-                raise UserError(f"Lỗi tạo PDF: {result.stderr}")
+                raise UserError(f"PDF creation error: {result.stderr}")
 
             # Read PDF content
             with open(pdf_path, 'rb') as pdf_file:

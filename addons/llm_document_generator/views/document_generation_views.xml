@@ -8,39 +8,39 @@
             <form>
                 <header>
                     <!-- Draft state buttons -->
-                    <button name="action_generate" type="object" string="Tạo tài liệu" class="btn-primary" invisible="state != 'draft'" confirm="Quá trình tạo tài liệu có thể mất 30-60 giây. Bấm OK để bắt đầu."/>
+                    <button name="action_generate" type="object" string="Generate Document" class="btn-primary" invisible="state != 'draft'" confirm="Document generation may take 30-60 seconds. Click OK to start."/>
 
                     <!-- Done state buttons -->
-                    <button name="action_start_review" type="object" string="Review &amp; Chỉnh sửa" class="btn-primary" invisible="state != 'done'"/>
-                    <button name="action_regenerate" type="object" string="Tạo lại" class="btn-secondary" invisible="state not in ('done', 'error')" confirm="Tạo lại tài liệu? Quá trình có thể mất 30-60 giây."/>
-                    <button name="action_export_pdf" type="object" string="Tải PDF" class="btn-success" invisible="state not in ('done', 'review')"/>
-                    <button name="action_export_docx" type="object" string="Tải DOCX" class="btn-success" invisible="state not in ('done', 'review')"/>
+                    <button name="action_start_review" type="object" string="Review &amp; Edit" class="btn-primary" invisible="state != 'done'"/>
+                    <button name="action_regenerate" type="object" string="Regenerate" class="btn-secondary" invisible="state not in ('done', 'error')" confirm="Regenerate document? This may take 30-60 seconds."/>
+                    <button name="action_export_pdf" type="object" string="Download PDF" class="btn-success" invisible="state not in ('done', 'review')"/>
+                    <button name="action_export_docx" type="object" string="Download DOCX" class="btn-success" invisible="state not in ('done', 'review')"/>
 
                     <!-- Review state buttons -->
-                    <button name="action_apply_review" type="object" string="Áp dụng góp ý" class="btn-primary" invisible="state != 'review'" confirm="AI sẽ chỉnh sửa tài liệu theo góp ý. Tiếp tục?"/>
-                    <button name="action_approve_document" type="object" string="Duyệt tài liệu" class="btn-success" invisible="state != 'review'"/>
+                    <button name="action_apply_review" type="object" string="Apply Feedback" class="btn-primary" invisible="state != 'review'" confirm="AI will edit the document based on your feedback. Continue?"/>
+                    <button name="action_approve_document" type="object" string="Approve Document" class="btn-success" invisible="state != 'review'"/>
 
                     <!-- Common buttons -->
-                    <button name="action_reset_draft" type="object" string="Về nháp" invisible="state == 'draft'"/>
+                    <button name="action_reset_draft" type="object" string="Reset to Draft" invisible="state == 'draft'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,generating,review,done"/>
                 </header>
                 <sheet>
                     <!-- Loading indicator when generating -->
                     <div invisible="state != 'generating'" class="alert alert-info text-center">
                         <i class="fa fa-spinner fa-spin fa-2x"/>
-                        <h4>Đang xử lý...</h4>
+                        <h4>Processing...</h4>
                     </div>
 
                     <!-- Review stats badge -->
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" type="object" name="action_start_review" icon="fa-edit" invisible="state not in ('done', 'review')">
-                            <field name="review_count" widget="statinfo" string="Lần review"/>
+                            <field name="review_count" widget="statinfo" string="Reviews"/>
                         </button>
                     </div>
 
                     <div class="oe_title">
                         <h1>
-                            <field name="name" placeholder="Tên tài liệu"/>
+                            <field name="name" placeholder="Document name"/>
                         </h1>
                     </div>
                     <group>
@@ -53,28 +53,28 @@
 
                     <!-- Error message -->
                     <div invisible="state != 'error'" class="alert alert-danger">
-                        <strong>Lỗi:</strong>
+                        <strong>Error:</strong>
                         <field name="error_message" nolabel="1"/>
                     </div>
 
                     <!-- Review panel -->
                     <div invisible="state != 'review'" class="alert alert-warning">
-                        <h5><i class="fa fa-edit"/> Chế độ Review</h5>
-                        <p>Xem nội dung bên dưới và nhập góp ý để AI chỉnh sửa.</p>
+                        <h5><i class="fa fa-edit"/> Review Mode</h5>
+                        <p>View the content below and enter feedback for AI to edit.</p>
                     </div>
-                    <group invisible="state != 'review'" string="Góp ý chỉnh sửa">
-                        <field name="review_feedback" nolabel="1" placeholder="Nhập góp ý chỉnh sửa...&#10;&#10;Ví dụ:&#10;- Sửa phần 2.1: thêm chi tiết về quy trình thanh toán&#10;- Bảng 'Yêu cầu chức năng': thêm cột 'Độ ưu tiên'&#10;- Phần kết luận: viết ngắn gọn hơn"/>
+                    <group invisible="state != 'review'" string="Edit Feedback">
+                        <field name="review_feedback" nolabel="1" placeholder="Enter edit feedback...&#10;&#10;Examples:&#10;- Edit section 2.1: add details about payment process&#10;- 'Functional Requirements' table: add 'Priority' column&#10;- Conclusion section: make it more concise"/>
                     </group>
 
                     <!-- Review history -->
                     <div invisible="not review_history" class="mt-3">
-                        <h5 style="font-weight: bold; margin-bottom: 10px;">Lịch sử review</h5>
+                        <h5 style="font-weight: bold; margin-bottom: 10px;">Review History</h5>
                         <field name="review_history" nolabel="1" readonly="1"/>
                     </div>
 
                     <!-- Generated content -->
                     <notebook invisible="state not in ('done', 'review')">
-                        <page string="Nội dung" name="content">
+                        <page string="Content" name="content">
                             <field name="generated_content" readonly="1"/>
                         </page>
                         <page string="Markdown" name="markdown">
@@ -114,17 +114,17 @@
                 <field name="name"/>
                 <field name="template_id"/>
                 <field name="category_id"/>
-                <filter string="Nháp" name="draft" domain="[('state', '=', 'draft')]"/>
-                <filter string="Đang review" name="review" domain="[('state', '=', 'review')]"/>
-                <filter string="Hoàn thành" name="done" domain="[('state', '=', 'done')]"/>
-                <filter string="Lỗi" name="error" domain="[('state', '=', 'error')]"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="In Review" name="review" domain="[('state', '=', 'review')]"/>
+                <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="Error" name="error" domain="[('state', '=', 'error')]"/>
                 <separator/>
-                <filter string="Đã review" name="reviewed" domain="[('review_count', '>', 0)]"/>
-                <filter string="Của tôi" name="my_docs" domain="[('create_uid', '=', uid)]"/>
-                <group expand="0" string="Nhóm theo">
-                    <filter string="Loại tài liệu" name="group_template" context="{'group_by': 'template_id'}"/>
-                    <filter string="Thể loại" name="group_category" context="{'group_by': 'category_id'}"/>
-                    <filter string="Trạng thái" name="group_state" context="{'group_by': 'state'}"/>
+                <filter string="Reviewed" name="reviewed" domain="[('review_count', '>', 0)]"/>
+                <filter string="My Documents" name="my_docs" domain="[('create_uid', '=', uid)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Document Type" name="group_template" context="{'group_by': 'template_id'}"/>
+                    <filter string="Category" name="group_category" context="{'group_by': 'category_id'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
                 </group>
             </search>
         </field>
@@ -132,16 +132,16 @@
 
     <!-- Generation Action -->
     <record id="llm_document_generation_action" model="ir.actions.act_window">
-        <field name="name">Tài liệu đã tạo</field>
+        <field name="name">Generated Documents</field>
         <field name="res_model">llm.document.generation</field>
         <field name="view_mode">list,form</field>
         <field name="context">{'search_default_my_docs': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Chưa có tài liệu nào!
+                No documents yet!
             </p>
             <p>
-                Sử dụng menu "Tạo tài liệu" để tạo tài liệu mới.
+                Use the "Create New" menu to generate a new document.
             </p>
         </field>
     </record>

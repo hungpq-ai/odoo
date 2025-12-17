@@ -5,23 +5,23 @@
         <field name="name">llm.generate.document.wizard.form</field>
         <field name="model">llm.generate.document.wizard</field>
         <field name="arch" type="xml">
-            <form string="Tạo tài liệu">
+            <form string="Generate Document">
                 <group>
                     <field name="template_id" options="{'no_create': True}"/>
                     <field name="category_id"/>
                 </group>
                 <group>
-                    <field name="requirements" placeholder="Nhập yêu cầu chi tiết cho tài liệu cần tạo..."/>
+                    <field name="requirements" placeholder="Enter detailed requirements for the document to be generated..."/>
                 </group>
                 <group>
                     <field name="model_id" options="{'no_create': True}"/>
                 </group>
                 <div class="alert alert-info">
-                    <i class="fa fa-info-circle"/> Quá trình tạo tài liệu có thể mất 30-60 giây. Vui lòng đợi sau khi bấm nút.
+                    <i class="fa fa-info-circle"/> Document generation may take 30-60 seconds. Please wait after clicking the button.
                 </div>
                 <footer>
-                    <button name="action_generate_now" type="object" string="Tạo tài liệu" class="btn-primary"/>
-                    <button string="Hủy" class="btn-secondary" special="cancel"/>
+                    <button name="action_generate_now" type="object" string="Generate Document" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
@@ -29,7 +29,7 @@
 
     <!-- Wizard Action -->
     <record id="llm_generate_document_wizard_action" model="ir.actions.act_window">
-        <field name="name">Tạo tài liệu</field>
+        <field name="name">Generate Document</field>
         <field name="res_model">llm.generate.document.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

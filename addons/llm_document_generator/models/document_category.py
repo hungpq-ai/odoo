@@ -48,4 +48,4 @@ class DocumentCategory(models.Model):
     @api.constrains("parent_id")
     def _check_parent_id(self):
         if self._has_cycle():
-            raise models.ValidationError("Lỗi! Không thể tạo danh mục đệ quy.")
+            raise models.ValidationError("Error! You cannot create recursive categories.")

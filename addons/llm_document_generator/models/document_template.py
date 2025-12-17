@@ -25,9 +25,9 @@ def extract_text_from_docx(file_content):
                     paragraphs.append(row_text)
         return "\n\n".join(paragraphs)
     except ImportError:
-        raise UserError("python-docx chưa được cài đặt. Chạy: pip install python-docx")
+        raise UserError("python-docx is not installed. Run: pip install python-docx")
     except Exception as e:
-        raise UserError(f"Lỗi đọc file DOCX: {e}")
+        raise UserError(f"Error reading DOCX file: {e}")
 
 
 def extract_text_from_pdf(file_content):
@@ -52,9 +52,9 @@ def extract_text_from_pdf(file_content):
                         text_parts.append(text)
                 return "\n\n".join(text_parts)
         except ImportError:
-            raise UserError("PyMuPDF hoặc pdfplumber chưa được cài đặt. Chạy: pip install pymupdf hoặc pip install pdfplumber")
+            raise UserError("PyMuPDF or pdfplumber is not installed. Run: pip install pymupdf or pip install pdfplumber")
     except Exception as e:
-        raise UserError(f"Lỗi đọc file PDF: {e}")
+        raise UserError(f"Error reading PDF file: {e}")
 
 
 class DocumentTemplate(models.Model):
@@ -63,43 +63,43 @@ class DocumentTemplate(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "sequence, name"
 
-    name = fields.Char(string="Tên mẫu", required=True, tracking=True, translate=True)
-    description = fields.Text(string="Mô tả", translate=True)
+    name = fields.Char(string="Template Name", required=True, tracking=True, translate=True)
+    description = fields.Text(string="Description", translate=True)
     category_id = fields.Many2one(
         "llm.document.category",
-        string="Thể loại",
+        string="Category",
         required=True,
         tracking=True,
     )
-    sequence = fields.Integer(string="Thứ tự", default=10)
+    sequence = fields.Integer(string="Sequence", default=10)
     active = fields.Boolean(default=True, tracking=True)
-    code = fields.Char(string="Mã", help="Mã kỹ thuật cho mẫu")
+    code = fields.Char(string="Code", help="Technical code for this template")
 
     # Sample template file - user can upload
     sample_file = fields.Binary(
-        string="File mẫu",
-        help="Upload file mẫu (DOCX, PDF, TXT) để AI tham khảo cấu trúc",
+        string="Sample File",
+        help="Upload a sample file (DOCX, PDF, TXT) for AI to reference the structure",
     )
-    sample_filename = fields.Char(string="Tên file")
+    sample_filename = fields.Char(string="Filename")
     sample_content = fields.Text(
-        string="Nội dung mẫu",
-        help="Nội dung văn bản mẫu - có thể nhập trực tiếp hoặc tự động trích xuất từ file",
+        string="Sample Content",
+        help="Sample text content - can be entered directly or auto-extracted from file",
     )
 
     # Knowledge embedding for RAG
     knowledge_collection_id = fields.Many2one(
         "llm.knowledge.collection",
         string="Knowledge Collection",
-        help="Collection để lưu embedded template. Giúp tiết kiệm tokens khi generate.",
+        help="Collection to store embedded template. Helps save tokens during generation.",
     )
     knowledge_resource_id = fields.Many2one(
         "llm.resource",
         string="Template Resource",
         readonly=True,
-        help="Resource đã được tạo từ template này",
+        help="Resource created from this template",
     )
     is_embedded = fields.Boolean(
-        string="Đã embed",
+        string="Embedded",
         compute="_compute_is_embedded",
         store=True,
     )
@@ -135,8 +135,8 @@ class DocumentTemplate(models.Model):
             else:
                 return {
                     "warning": {
-                        "title": "Định dạng không hỗ trợ",
-                        "message": f"File {self.sample_filename} không được hỗ trợ. Chỉ hỗ trợ: DOCX, PDF, TXT, MD",
+                        "title": "Unsupported Format",
+                        "message": f"File {self.sample_filename} is not supported. Supported formats: DOCX, PDF, TXT, MD",
                     }
                 }
 
@@ -144,8 +144,8 @@ class DocumentTemplate(models.Model):
                 self.sample_content = extracted_text.strip()
                 return {
                     "warning": {
-                        "title": "Trích xuất thành công",
-                        "message": f"Đã trích xuất {len(extracted_text)} ký tự từ {self.sample_filename}",
+                        "title": "Extraction Successful",
+                        "message": f"Extracted {len(extracted_text)} characters from {self.sample_filename}",
                         "type": "notification",
                     }
                 }
@@ -155,8 +155,8 @@ class DocumentTemplate(models.Model):
             _logger.error(f"Error extracting file content: {e}")
             return {
                 "warning": {
-                    "title": "Lỗi trích xuất",
-                    "message": f"Không thể trích xuất nội dung từ file: {e}",
+                    "title": "Extraction Error",
+                    "message": f"Could not extract content from file: {e}",
                 }
             }
 
@@ -164,47 +164,47 @@ class DocumentTemplate(models.Model):
     system_prompt = fields.Text(
         string="System Prompt",
         required=True,
-        help="Hướng dẫn cho AI về vai trò và cách viết",
-        default="""Bạn là chuyên gia soạn thảo văn bản chuyên nghiệp.
+        help="Instructions for AI about role and writing style",
+        default="""You are a professional document drafting expert.
 
-NHIỆM VỤ: Tạo văn bản MỚI dựa trên MẪU được cung cấp.
+TASK: Create a NEW document based on the PROVIDED TEMPLATE.
 
-QUY TẮC BẮT BUỘC:
-1. GIỮ NGUYÊN CẤU TRÚC của mẫu (heading, sections, thứ tự)
-2. GIỮ NGUYÊN FORMAT:
-   - Nếu mẫu có TABLE → tạo TABLE với cùng cấu trúc cột
-   - Nếu mẫu có danh sách đánh số → giữ danh sách đánh số
-   - Nếu mẫu có bullet points → giữ bullet points
-3. THAY THẾ NỘI DUNG phù hợp với yêu cầu mới
-4. Sử dụng Markdown format:
-   - Table: | Cột 1 | Cột 2 |
+MANDATORY RULES:
+1. KEEP THE STRUCTURE of the template (headings, sections, order)
+2. KEEP THE FORMAT:
+   - If template has TABLE → create TABLE with same column structure
+   - If template has numbered list → keep numbered list
+   - If template has bullet points → keep bullet points
+3. REPLACE CONTENT to match new requirements
+4. Use Markdown format:
+   - Table: | Column 1 | Column 2 |
    - Heading: # ## ###
    - Bold: **text**
-   - List: - item hoặc 1. item
-5. KHÔNG sử dụng:
+   - List: - item or 1. item
+5. DO NOT use:
    - Mermaid diagrams (```mermaid)
-   - Code blocks cho sơ đồ
-   - Thay vào đó, mô tả sơ đồ bằng văn bản hoặc bảng""",
+   - Code blocks for diagrams
+   - Instead, describe diagrams using text or tables""",
     )
     user_prompt_template = fields.Text(
         string="User Prompt",
         required=True,
-        help="Mẫu prompt. Sử dụng {context} cho yêu cầu user, {sample} cho nội dung mẫu",
-        default="""## MẪU VĂN BẢN GỐC:
+        help="Prompt template. Use {context} for user requirements, {sample} for sample content",
+        default="""## ORIGINAL TEMPLATE:
 
 {sample}
 
 ---
 
-## YÊU CẦU TẠO VĂN BẢN MỚI:
+## NEW DOCUMENT REQUIREMENTS:
 
 {context}
 
 ---
 
-Hãy tạo văn bản mới GIỐNG ĐÚNG CẤU TRÚC mẫu trên, thay nội dung theo yêu cầu.
-Nếu mẫu có bảng (table) thì văn bản mới PHẢI có bảng với cùng format.
-Output bằng Markdown.""",
+Create a new document with EXACTLY THE SAME STRUCTURE as the template above, replacing content according to requirements.
+If the template has tables, the new document MUST have tables with the same format.
+Output in Markdown.""",
     )
 
     # Statistics
@@ -230,7 +230,7 @@ Output bằng Markdown.""",
     def get_formatted_prompt(self, context, requirements=""):
         """Format the user prompt with context, sample and requirements"""
         self.ensure_one()
-        sample = self.sample_content or "(Không có mẫu)"
+        sample = self.sample_content or "(No template)"
         return self.user_prompt_template.format(
             context=context,
             sample=sample,
@@ -242,15 +242,15 @@ Output bằng Markdown.""",
         self.ensure_one()
 
         if not self.sample_content:
-            raise UserError("Vui lòng nhập nội dung mẫu trước khi embed.")
+            raise UserError("Please enter sample content before embedding.")
 
         if not self.knowledge_collection_id:
-            raise UserError("Vui lòng chọn Knowledge Collection trước khi embed.")
+            raise UserError("Please select a Knowledge Collection before embedding.")
 
         # Get or create ir.model for llm.document.template
         model = self.env["ir.model"].search([("model", "=", "llm.document.template")], limit=1)
         if not model:
-            raise UserError("Không tìm thấy model llm.document.template")
+            raise UserError("Model llm.document.template not found")
 
         # Check if resource already exists
         if self.knowledge_resource_id:
@@ -277,7 +277,7 @@ Output bằng Markdown.""",
         resource.process_resource()
 
         self.message_post(
-            body=f"Template đã được embed vào collection '{self.knowledge_collection_id.name}'",
+            body=f"Template has been embedded into collection '{self.knowledge_collection_id.name}'",
             message_type="notification",
         )
 
@@ -285,8 +285,8 @@ Output bằng Markdown.""",
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": "Embed thành công",
-                "message": f"Template đã được embed vào '{self.knowledge_collection_id.name}'",
+                "title": "Embedding Successful",
+                "message": f"Template has been embedded into '{self.knowledge_collection_id.name}'",
                 "type": "success",
                 "sticky": False,
             },

@@ -3,75 +3,75 @@
     <data noupdate="1">
         <!-- Summary Report Template -->
         <record id="template_summary_report" model="llm.document.template">
-            <field name="name">Báo cáo tổng kết</field>
+            <field name="name">Summary Report</field>
             <field name="code">summary_report</field>
             <field name="category_id" ref="category_summary_report"/>
-            <field name="description">Tạo báo cáo tổng kết từ các tài liệu nguồn</field>
-            <field name="system_prompt">Bạn là chuyên gia soạn thảo báo cáo tổng kết chuyên nghiệp.
-Nhiệm vụ: Tổng hợp thông tin từ các tài liệu nguồn thành một báo cáo tổng kết hoàn chỉnh.
+            <field name="description">Create summary reports from source documents</field>
+            <field name="system_prompt">You are an expert in drafting professional summary reports.
+Task: Compile information from source documents into a complete summary report.
 
-Yêu cầu:
-- Cấu trúc rõ ràng với các phần: Mở đầu, Nội dung chính, Kết luận và Kiến nghị
-- Sử dụng ngôn ngữ trang trọng, chính xác
-- Trích dẫn số liệu, dữ kiện từ tài liệu nguồn
-- Đưa ra nhận xét, đánh giá khách quan</field>
-            <field name="user_prompt_template">Dựa trên các tài liệu nguồn sau:
+Requirements:
+- Clear structure with sections: Introduction, Main Content, Conclusions and Recommendations
+- Use formal, accurate language
+- Quote data and facts from source documents
+- Provide objective assessments and evaluations</field>
+            <field name="user_prompt_template">Based on the following source documents:
 
 {context}
 
-Hãy tạo một BÁO CÁO TỔNG KẾT với cấu trúc:
+Create a SUMMARY REPORT with the structure:
 
-1. **MỞ ĐẦU**
-   - Mục đích báo cáo
-   - Phạm vi và thời gian
+1. **INTRODUCTION**
+   - Purpose of the report
+   - Scope and timeframe
 
-2. **NỘI DUNG CHÍNH**
-   - Tổng quan tình hình
-   - Kết quả đạt được
-   - Những tồn tại, hạn chế
+2. **MAIN CONTENT**
+   - Overview of the situation
+   - Results achieved
+   - Issues and limitations
 
-3. **KẾT LUẬN VÀ KIẾN NGHỊ**
-   - Đánh giá chung
-   - Các kiến nghị, đề xuất
+3. **CONCLUSIONS AND RECOMMENDATIONS**
+   - Overall assessment
+   - Recommendations and suggestions
 
-Yêu cầu bổ sung: {requirements}</field>
+Additional requirements: {requirements}</field>
             <field name="output_format">markdown</field>
             <field name="sequence">10</field>
         </record>
 
         <!-- Analysis Report Template -->
         <record id="template_analysis_report" model="llm.document.template">
-            <field name="name">Báo cáo phân tích</field>
+            <field name="name">Analysis Report</field>
             <field name="code">analysis_report</field>
             <field name="category_id" ref="category_analysis_report"/>
-            <field name="description">Phân tích chuyên sâu từ dữ liệu nguồn</field>
-            <field name="system_prompt">Bạn là chuyên gia phân tích dữ liệu và viết báo cáo.
-Nhiệm vụ: Phân tích thông tin từ tài liệu nguồn và đưa ra các insights có giá trị.
+            <field name="description">In-depth analysis from source data</field>
+            <field name="system_prompt">You are an expert in data analysis and report writing.
+Task: Analyze information from source documents and provide valuable insights.
 
-Yêu cầu:
-- Phân tích logic, có cơ sở
-- Sử dụng dữ liệu định lượng khi có thể
-- Đưa ra các so sánh, xu hướng
-- Kết luận và khuyến nghị hành động</field>
-            <field name="user_prompt_template">Phân tích các tài liệu sau:
+Requirements:
+- Logical, well-founded analysis
+- Use quantitative data when available
+- Provide comparisons and trends
+- Conclusions and actionable recommendations</field>
+            <field name="user_prompt_template">Analyze the following documents:
 
 {context}
 
-Tạo BÁO CÁO PHÂN TÍCH bao gồm:
+Create an ANALYSIS REPORT including:
 
-1. **TỔNG QUAN**
-   - Mô tả nguồn dữ liệu
-   - Phương pháp phân tích
+1. **OVERVIEW**
+   - Description of data sources
+   - Analysis methodology
 
-2. **PHÂN TÍCH CHI TIẾT**
-   - Các phát hiện chính
-   - Phân tích xu hướng
-   - So sánh và đối chiếu
+2. **DETAILED ANALYSIS**
+   - Key findings
+   - Trend analysis
+   - Comparisons and contrasts
 
-3. **INSIGHTS VÀ KHUYẾN NGHỊ**
-   - Các insights quan trọng
-   - Khuyến nghị hành động
-   - Rủi ro cần lưu ý
+3. **INSIGHTS AND RECOMMENDATIONS**
+   - Important insights
+   - Action recommendations
+   - Risks to consider
 
 {requirements}</field>
             <field name="output_format">markdown</field>
@@ -80,41 +80,41 @@ Tạo BÁO CÁO PHÂN TÍCH bao gồm:
 
         <!-- Meeting Minutes Template -->
         <record id="template_meeting_minutes" model="llm.document.template">
-            <field name="name">Biên bản họp</field>
+            <field name="name">Meeting Minutes</field>
             <field name="code">meeting_minutes</field>
             <field name="category_id" ref="category_minute"/>
-            <field name="description">Tạo biên bản họp từ ghi chép, recording</field>
-            <field name="system_prompt">Bạn là thư ký hành chính chuyên nghiệp.
-Nhiệm vụ: Soạn biên bản họp theo đúng thể thức văn bản hành chính Việt Nam.
+            <field name="description">Create meeting minutes from notes or recordings</field>
+            <field name="system_prompt">You are a professional administrative secretary.
+Task: Draft meeting minutes following proper document formatting.
 
-Yêu cầu:
-- Ghi đầy đủ thông tin: thời gian, địa điểm, thành phần
-- Tóm tắt các nội dung thảo luận
-- Liệt kê các quyết định, kết luận
-- Phân công nhiệm vụ cụ thể</field>
-            <field name="user_prompt_template">Dựa trên nội dung cuộc họp sau:
+Requirements:
+- Include complete information: time, location, attendees
+- Summarize discussion topics
+- List decisions and conclusions
+- Assign specific tasks</field>
+            <field name="user_prompt_template">Based on the following meeting content:
 
 {context}
 
-Tạo BIÊN BẢN HỌP theo mẫu:
+Create MEETING MINUTES following this template:
 
-**BIÊN BẢN HỌP**
+**MEETING MINUTES**
 
-1. Thời gian: [Xác định từ nội dung]
-2. Địa điểm: [Xác định từ nội dung]
-3. Thành phần tham dự:
-4. Chủ trì:
-5. Thư ký:
+1. Time: [Determine from content]
+2. Location: [Determine from content]
+3. Attendees:
+4. Chairperson:
+5. Secretary:
 
-**NỘI DUNG CUỘC HỌP:**
+**MEETING CONTENT:**
 
-I. Các vấn đề thảo luận:
+I. Discussion Topics:
 
-II. Các ý kiến phát biểu:
+II. Opinions Expressed:
 
-III. Kết luận và quyết định:
+III. Conclusions and Decisions:
 
-IV. Phân công thực hiện:
+IV. Task Assignments:
 
 {requirements}</field>
             <field name="output_format">markdown</field>
@@ -123,46 +123,43 @@ IV. Phân công thực hiện:
 
         <!-- Official Letter Template -->
         <record id="template_official_letter" model="llm.document.template">
-            <field name="name">Công văn</field>
+            <field name="name">Official Letter</field>
             <field name="code">official_letter</field>
             <field name="category_id" ref="category_letter"/>
-            <field name="description">Soạn công văn gửi đối tác, cơ quan</field>
-            <field name="system_prompt">Bạn là chuyên viên văn thư hành chính.
-Nhiệm vụ: Soạn công văn theo đúng thể thức văn bản hành chính.
+            <field name="description">Draft official letters to partners and organizations</field>
+            <field name="system_prompt">You are a professional correspondence specialist.
+Task: Draft official letters following proper business format.
 
-Yêu cầu:
-- Tuân thủ Nghị định 30/2020/NĐ-CP về công tác văn thư
-- Ngôn ngữ trang trọng, lịch sự
-- Nội dung rõ ràng, súc tích
-- Có phần kính chuyển phù hợp</field>
-            <field name="user_prompt_template">Dựa trên thông tin sau:
+Requirements:
+- Follow standard business letter format
+- Use formal, polite language
+- Clear, concise content
+- Include appropriate references</field>
+            <field name="user_prompt_template">Based on the following information:
 
 {context}
 
-Soạn CÔNG VĂN với cấu trúc:
+Draft an OFFICIAL LETTER with the structure:
 
-[TÊN CƠ QUAN/ĐƠN VỊ]
-Số: .../CV-...
+[ORGANIZATION/COMPANY NAME]
+Ref: .../...
 
-CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
-Độc lập - Tự do - Hạnh phúc
+Date: [Date]
 
-..., ngày ... tháng ... năm ...
+**Re:** [Subject]
 
-**V/v:** [Trích yếu nội dung]
+To: [Recipient Name/Organization]
 
-Kính gửi: [Tên cơ quan/tổ chức nhận]
+[Letter content]
 
-[Nội dung công văn]
+Sincerely,
 
-Trân trọng./.
+[Position]
+[Full Name]
 
-Nơi nhận:
-- Như trên;
-- Lưu: VT, ...
-
-[Chức vụ người ký]
-[Họ và tên]
+CC:
+- As above
+- File
 
 {requirements}</field>
             <field name="output_format">markdown</field>
@@ -171,46 +168,46 @@ Nơi nhận:
 
         <!-- Proposal Template -->
         <record id="template_proposal" model="llm.document.template">
-            <field name="name">Tờ trình đề xuất</field>
+            <field name="name">Proposal</field>
             <field name="code">proposal</field>
             <field name="category_id" ref="category_proposal"/>
-            <field name="description">Soạn tờ trình đề xuất phương án</field>
-            <field name="system_prompt">Bạn là chuyên viên lập kế hoạch và đề xuất.
-Nhiệm vụ: Soạn tờ trình đề xuất thuyết phục, có cơ sở.
+            <field name="description">Draft proposals and project plans</field>
+            <field name="system_prompt">You are a planning and proposal specialist.
+Task: Draft persuasive, well-founded proposals.
 
-Yêu cầu:
-- Trình bày rõ lý do, căn cứ đề xuất
-- Phân tích ưu nhược điểm các phương án
-- Đề xuất phương án khả thi
-- Dự kiến nguồn lực và tiến độ</field>
-            <field name="user_prompt_template">Căn cứ vào các tài liệu:
+Requirements:
+- Present clear reasons and basis for the proposal
+- Analyze pros and cons of different options
+- Propose feasible solutions
+- Estimate resources and timeline</field>
+            <field name="user_prompt_template">Based on the following documents:
 
 {context}
 
-Soạn TỜ TRÌNH ĐỀ XUẤT gồm:
+Draft a PROPOSAL including:
 
-**TỜ TRÌNH**
-V/v: [Trích yếu đề xuất]
+**PROPOSAL**
+Re: [Summary of proposal]
 
-Kính gửi: [Cấp có thẩm quyền]
+To: [Authority/Approver]
 
-**I. CĂN CỨ ĐỀ XUẤT**
-- Căn cứ pháp lý
-- Căn cứ thực tiễn
+**I. BASIS FOR PROPOSAL**
+- Legal basis
+- Practical basis
 
-**II. THỰC TRẠNG VẤN ĐỀ**
-- Mô tả tình hình hiện tại
-- Những khó khăn, vướng mắc
+**II. CURRENT SITUATION**
+- Description of current state
+- Difficulties and obstacles
 
-**III. NỘI DUNG ĐỀ XUẤT**
-- Phương án 1: ...
-- Phương án 2: ...
-- Đánh giá và so sánh các phương án
+**III. PROPOSED CONTENT**
+- Option 1: ...
+- Option 2: ...
+- Evaluation and comparison of options
 
-**IV. KIẾN NGHỊ**
-- Phương án đề xuất
-- Lộ trình thực hiện
-- Nguồn lực cần thiết
+**IV. RECOMMENDATIONS**
+- Recommended option
+- Implementation roadmap
+- Required resources
 
 {requirements}</field>
             <field name="output_format">markdown</field>
@@ -219,48 +216,48 @@ Kính gửi: [Cấp có thẩm quyền]
 
         <!-- User Guide Template -->
         <record id="template_user_guide" model="llm.document.template">
-            <field name="name">Hướng dẫn sử dụng</field>
+            <field name="name">User Guide</field>
             <field name="code">user_guide</field>
             <field name="category_id" ref="category_user_guide"/>
-            <field name="description">Tạo tài liệu hướng dẫn sử dụng</field>
-            <field name="system_prompt">Bạn là technical writer chuyên nghiệp.
-Nhiệm vụ: Viết tài liệu hướng dẫn sử dụng dễ hiểu, chi tiết.
+            <field name="description">Create user documentation and guides</field>
+            <field name="system_prompt">You are a professional technical writer.
+Task: Write clear, detailed user documentation.
 
-Yêu cầu:
-- Ngôn ngữ đơn giản, dễ hiểu
-- Hướng dẫn từng bước cụ thể
-- Có ảnh minh họa khi cần
-- Bao gồm FAQ và troubleshooting</field>
-            <field name="user_prompt_template">Dựa trên tài liệu kỹ thuật:
+Requirements:
+- Simple, easy-to-understand language
+- Step-by-step specific instructions
+- Include illustrations when needed
+- Include FAQ and troubleshooting sections</field>
+            <field name="user_prompt_template">Based on the technical documentation:
 
 {context}
 
-Tạo HƯỚNG DẪN SỬ DỤNG gồm:
+Create a USER GUIDE including:
 
-# Hướng dẫn sử dụng [Tên sản phẩm/tính năng]
+# User Guide for [Product/Feature Name]
 
-## 1. Giới thiệu
-- Mô tả tổng quan
-- Đối tượng sử dụng
-- Yêu cầu hệ thống
+## 1. Introduction
+- Overview
+- Target users
+- System requirements
 
-## 2. Bắt đầu
-- Cài đặt/Thiết lập
-- Đăng nhập/Truy cập
+## 2. Getting Started
+- Installation/Setup
+- Login/Access
 
-## 3. Hướng dẫn chi tiết
-### 3.1 [Tính năng 1]
-- Bước 1: ...
-- Bước 2: ...
+## 3. Detailed Instructions
+### 3.1 [Feature 1]
+- Step 1: ...
+- Step 2: ...
 
-### 3.2 [Tính năng 2]
+### 3.2 [Feature 2]
 ...
 
-## 4. Câu hỏi thường gặp (FAQ)
+## 4. Frequently Asked Questions (FAQ)
 
-## 5. Xử lý sự cố
+## 5. Troubleshooting
 
-## 6. Liên hệ hỗ trợ
+## 6. Contact Support
 
 {requirements}</field>
             <field name="output_format">markdown</field>
@@ -269,40 +266,40 @@ Tạo HƯỚNG DẪN SỬ DỤNG gồm:
 
         <!-- Notice Template -->
         <record id="template_notice" model="llm.document.template">
-            <field name="name">Thông báo</field>
+            <field name="name">Notice</field>
             <field name="code">notice</field>
             <field name="category_id" ref="category_notice"/>
-            <field name="description">Soạn thông báo nội bộ</field>
-            <field name="system_prompt">Bạn là chuyên viên truyền thông nội bộ.
-Nhiệm vụ: Soạn thông báo rõ ràng, ngắn gọn, đầy đủ thông tin.
+            <field name="description">Draft internal notices</field>
+            <field name="system_prompt">You are an internal communications specialist.
+Task: Draft clear, concise, informative notices.
 
-Yêu cầu:
-- Tiêu đề thu hút, rõ ràng
-- Nội dung súc tích, dễ hiểu
-- Thông tin cần thiết: ai, cái gì, khi nào, ở đâu, như thế nào
-- Kêu gọi hành động nếu cần</field>
-            <field name="user_prompt_template">Dựa trên thông tin:
+Requirements:
+- Engaging, clear title
+- Concise, easy-to-understand content
+- Essential information: who, what, when, where, how
+- Call to action if needed</field>
+            <field name="user_prompt_template">Based on the information:
 
 {context}
 
-Soạn THÔNG BÁO theo mẫu:
+Draft a NOTICE following this template:
 
-**THÔNG BÁO**
-V/v: [Trích yếu nội dung]
+**NOTICE**
+Re: [Subject]
 
-Kính gửi: [Đối tượng nhận thông báo]
+To: [Target audience]
 
-[Nội dung thông báo]
+[Notice content]
 
-**Thông tin chi tiết:**
-- Thời gian:
-- Địa điểm:
-- Đối tượng áp dụng:
-- Yêu cầu thực hiện:
+**Details:**
+- Time:
+- Location:
+- Applicable to:
+- Requirements:
 
-Đề nghị [đối tượng] nghiêm túc thực hiện.
+All [target audience] are requested to comply accordingly.
 
-Trân trọng./.
+Thank you.
 
 {requirements}</field>
             <field name="output_format">markdown</field>
