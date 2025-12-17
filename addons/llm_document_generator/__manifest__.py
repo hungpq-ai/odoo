@@ -26,7 +26,7 @@
         "mail",
     ],
     "external_dependencies": {
-        "python": ["markdown", "python-docx"],
+        "python": ["markdown", "python-docx", "pymupdf"],
     },
     "data": [
         "security/ir.model.access.csv",

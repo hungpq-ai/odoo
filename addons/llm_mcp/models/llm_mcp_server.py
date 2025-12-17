@@ -523,6 +523,11 @@ class LLMMCPServer(models.Model):
 
     is_connected = fields.Boolean(string="Connected", default=False, readonly=True)
     is_active = fields.Boolean(string="Active", default=True)
+    auto_connect = fields.Boolean(
+        string="Tự động kết nối",
+        default=False,
+        help="Tự động kết nối và import tools khi Odoo khởi động"
+    )
 
     protocol_version = fields.Char(string="Protocol Version", readonly=True)
     server_info = fields.Text(string="Server Info", readonly=True)
@@ -646,3 +651,20 @@ class LLMMCPServer(models.Model):
             raise UserError(_("MCP server is not connected"))
 
         return manager.call_tool(tool_name, arguments)
+
+    @api.model
+    def _auto_connect_servers(self):
+        """Auto-connect MCP servers that have auto_connect=True.
+        Called on Odoo startup via post_init_hook.
+        """
+        servers = self.search([
+            ('auto_connect', '=', True),
+            ('is_active', '=', True),
+        ])
+        for server in servers:
+            try:
+                _logger.info(f"Auto-connecting MCP server: {server.name}")
+                server.start_server()
+                _logger.info(f"MCP server '{server.name}' auto-connected successfully")
+            except Exception as e:
+                _logger.warning(f"Failed to auto-connect MCP server '{server.name}': {e}")

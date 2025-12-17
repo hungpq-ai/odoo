@@ -8,8 +8,9 @@
             <list>
                 <field name="name" />
                 <field name="transport" />
-                <field name="is_connected" />
-                <field name="is_active" />
+                <field name="auto_connect" string="Auto" widget="boolean"/>
+                <field name="is_connected" widget="boolean"/>
+                <field name="is_active" widget="boolean"/>
             </list>
         </field>
     </record>
@@ -32,6 +33,7 @@
                             <field name="transport" />
                             <field name="is_connected" readonly="1" />
                             <field name="is_active" />
+                            <field name="auto_connect" widget="boolean_toggle"/>
                         </group>
                         <group string="Configuration">
                             <field name="command" invisible="transport != 'stdio'" required="transport == 'stdio'" />

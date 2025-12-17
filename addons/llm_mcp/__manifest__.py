@@ -13,6 +13,7 @@
         - Auto-discover and register tools from MCP servers
         - Execute MCP tools within LLM conversations
         - JSON-RPC 2.0 protocol support
+        - Auto-connect on Odoo startup
     """,
     "author": "Apexive Solutions LLC",
     "website": "https://github.com/apexive/odoo-llm",
@@ -22,6 +23,7 @@
         "security/ir.model.access.csv",
         "views/llm_mcp_server_views.xml",
     ],
+    "post_init_hook": "_post_init_hook",
     "installable": True,
     "auto_install": False,
     "application": False,

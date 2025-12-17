@@ -7,21 +7,37 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_generate" type="object" string="🚀 Tạo tài liệu" class="btn-primary" invisible="state != 'draft'" confirm="Quá trình tạo tài liệu có thể mất 30-60 giây. Bấm OK để bắt đầu."/>
-                    <button name="action_regenerate" type="object" string="🔄 Tạo lại" class="btn-secondary" invisible="state not in ('done', 'error')" confirm="Tạo lại tài liệu? Quá trình có thể mất 30-60 giây."/>
+                    <!-- Draft state buttons -->
+                    <button name="action_generate" type="object" string="Tạo tài liệu" class="btn-primary" invisible="state != 'draft'" confirm="Quá trình tạo tài liệu có thể mất 30-60 giây. Bấm OK để bắt đầu."/>
+
+                    <!-- Done state buttons -->
+                    <button name="action_start_review" type="object" string="Review &amp; Chỉnh sửa" class="btn-primary" invisible="state != 'done'"/>
+                    <button name="action_regenerate" type="object" string="Tạo lại" class="btn-secondary" invisible="state not in ('done', 'error')" confirm="Tạo lại tài liệu? Quá trình có thể mất 30-60 giây."/>
+                    <button name="action_export_pdf" type="object" string="Tải PDF" class="btn-success" invisible="state not in ('done', 'review')"/>
+                    <button name="action_export_docx" type="object" string="Tải DOCX" class="btn-success" invisible="state not in ('done', 'review')"/>
+
+                    <!-- Review state buttons -->
+                    <button name="action_apply_review" type="object" string="Áp dụng góp ý" class="btn-primary" invisible="state != 'review'" confirm="AI sẽ chỉnh sửa tài liệu theo góp ý. Tiếp tục?"/>
+                    <button name="action_approve_document" type="object" string="Duyệt tài liệu" class="btn-success" invisible="state != 'review'"/>
+
+                    <!-- Common buttons -->
                     <button name="action_reset_draft" type="object" string="Về nháp" invisible="state == 'draft'"/>
-                    <button name="action_export_pdf" type="object" string="Tải PDF" class="btn-success" invisible="state != 'done'"/>
-                    <button name="action_export_docx" type="object" string="Tải DOCX" class="btn-success" invisible="state != 'done'"/>
-                    <button name="action_export_markdown" type="object" string="Tải Markdown" invisible="state != 'done'"/>
-                    <button name="action_export_html" type="object" string="Tải HTML" invisible="state != 'done'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,generating,done"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,generating,review,done"/>
                 </header>
                 <sheet>
                     <!-- Loading indicator when generating -->
                     <div invisible="state != 'generating'" class="alert alert-info text-center">
                         <i class="fa fa-spinner fa-spin fa-2x"/>
-                        <h4>Đang tạo tài liệu...</h4>
+                        <h4>Đang xử lý...</h4>
                     </div>
+
+                    <!-- Review stats badge -->
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_start_review" icon="fa-edit" invisible="state not in ('done', 'review')">
+                            <field name="review_count" widget="statinfo" string="Lần review"/>
+                        </button>
+                    </div>
+
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Tên tài liệu"/>
@@ -29,19 +45,44 @@
                     </div>
                     <group>
                         <field name="template_id" readonly="state != 'draft'"/>
-                        <field name="selected_model_id" readonly="state != 'draft'" invisible="state != 'draft'"/>
+                        <field name="selected_model_id" readonly="state not in ('draft', 'review')" invisible="state not in ('draft', 'review')"/>
                     </group>
                     <group invisible="state != 'draft'">
                         <field name="requirements"/>
                     </group>
+
                     <!-- Error message -->
                     <div invisible="state != 'error'" class="alert alert-danger">
                         <strong>Lỗi:</strong>
                         <field name="error_message" nolabel="1"/>
                     </div>
+
+                    <!-- Review panel -->
+                    <div invisible="state != 'review'" class="alert alert-warning">
+                        <h5><i class="fa fa-edit"/> Chế độ Review</h5>
+                        <p>Xem nội dung bên dưới và nhập góp ý để AI chỉnh sửa.</p>
+                    </div>
+                    <group invisible="state != 'review'" string="Góp ý chỉnh sửa">
+                        <field name="review_feedback" nolabel="1" placeholder="Nhập góp ý chỉnh sửa...&#10;&#10;Ví dụ:&#10;- Sửa phần 2.1: thêm chi tiết về quy trình thanh toán&#10;- Bảng 'Yêu cầu chức năng': thêm cột 'Độ ưu tiên'&#10;- Phần kết luận: viết ngắn gọn hơn"/>
+                    </group>
+
+                    <!-- Review history -->
+                    <div invisible="not review_history" class="mt-3">
+                        <h5 style="font-weight: bold; margin-bottom: 10px;">Lịch sử review</h5>
+                        <field name="review_history" nolabel="1" readonly="1"/>
+                    </div>
+
                     <!-- Generated content -->
-                    <field name="generated_content" readonly="1" invisible="state != 'done'"/>
+                    <notebook invisible="state not in ('done', 'review')">
+                        <page string="Nội dung" name="content">
+                            <field name="generated_content" readonly="1"/>
+                        </page>
+                        <page string="Markdown" name="markdown">
+                            <field name="generated_markdown" readonly="1"/>
+                        </page>
+                    </notebook>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -54,7 +95,11 @@
             <list>
                 <field name="name"/>
                 <field name="template_id"/>
-                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-warning="state == 'generating'" decoration-danger="state == 'error'"/>
+                <field name="review_count" string="Reviews"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-warning="state in ('generating', 'review')"
+                       decoration-danger="state == 'error'"/>
                 <field name="create_date"/>
             </list>
         </field>
@@ -70,9 +115,11 @@
                 <field name="template_id"/>
                 <field name="category_id"/>
                 <filter string="Nháp" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Đang review" name="review" domain="[('state', '=', 'review')]"/>
                 <filter string="Hoàn thành" name="done" domain="[('state', '=', 'done')]"/>
                 <filter string="Lỗi" name="error" domain="[('state', '=', 'error')]"/>
                 <separator/>
+                <filter string="Đã review" name="reviewed" domain="[('review_count', '>', 0)]"/>
                 <filter string="Của tôi" name="my_docs" domain="[('create_uid', '=', uid)]"/>
                 <group expand="0" string="Nhóm theo">
                     <filter string="Loại tài liệu" name="group_template" context="{'group_by': 'template_id'}"/>

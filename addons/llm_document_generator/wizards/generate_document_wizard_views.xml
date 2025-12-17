@@ -20,8 +20,7 @@
                     <i class="fa fa-info-circle"/> Quá trình tạo tài liệu có thể mất 30-60 giây. Vui lòng đợi sau khi bấm nút.
                 </div>
                 <footer>
-                    <button name="action_generate_now" type="object" string="🚀 Tạo tài liệu" class="btn-primary"/>
-                    <button name="action_generate" type="object" string="📝 Tạo nháp" class="btn-secondary"/>
+                    <button name="action_generate_now" type="object" string="Tạo tài liệu" class="btn-primary"/>
                     <button string="Hủy" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

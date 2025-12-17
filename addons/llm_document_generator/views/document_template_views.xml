@@ -6,45 +6,129 @@
         <field name="model">llm.document.template</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <!-- Main action button -->
+                    <button name="action_embed_template" type="object"
+                            string="Embed Template"
+                            class="btn-primary"
+                            invisible="not sample_content or not knowledge_collection_id or is_embedded"/>
+                    <button name="action_embed_template" type="object"
+                            string="Re-embed Template"
+                            class="btn-secondary"
+                            invisible="not sample_content or not knowledge_collection_id or not is_embedded"/>
+                    <!-- Status badge -->
+                    <field name="is_embedded" widget="badge"
+                           decoration-success="is_embedded"
+                           decoration-warning="not is_embedded"/>
+                </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" type="object" name="action_view_generations" icon="fa-file-text-o">
                             <field name="generation_count" widget="statinfo" string="Đã tạo"/>
                         </button>
                     </div>
+                    <widget name="web_ribbon" title="Đã Embed" bg_color="text-bg-success"
+                            invisible="not is_embedded"/>
                     <div class="oe_title">
                         <h1>
                             <field name="name" placeholder="Tên mẫu tài liệu"/>
                         </h1>
                     </div>
                     <group>
-                        <field name="category_id"/>
+                        <group>
+                            <field name="category_id"/>
+                        </group>
+                        <group>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
                     </group>
+
                     <notebook>
+                        <!-- Tab 1: Nội dung mẫu -->
                         <page string="Nội dung mẫu" name="sample">
+                            <!-- Upload section -->
                             <group>
-                                <field name="sample_file" filename="sample_filename" string="Upload file mẫu"/>
-                                <field name="sample_filename" invisible="1"/>
+                                <group string="1. Upload file mẫu">
+                                    <field name="sample_file" filename="sample_filename"/>
+                                    <field name="sample_filename" invisible="1"/>
+                                    <div class="text-muted small" colspan="2">
+                                        Hỗ trợ: DOCX, PDF, TXT, MD - Nội dung sẽ được tự động trích xuất
+                                    </div>
+                                </group>
+                                <group string="2. Chọn Collection để Embed">
+                                    <field name="knowledge_collection_id"
+                                           placeholder="Chọn collection..."
+                                           options="{'no_create': False, 'no_quick_create': True}"/>
+                                    <field name="knowledge_resource_id" readonly="1"
+                                           invisible="not knowledge_resource_id"/>
+                                </group>
                             </group>
-                            <field name="sample_content" placeholder="Hoặc nhập/dán nội dung văn bản mẫu vào đây..."/>
+
+                            <!-- Status indicator -->
+                            <div class="alert alert-info" invisible="sample_content or is_embedded">
+                                <strong>Upload file mẫu</strong> để bắt đầu. Nội dung sẽ được tự động trích xuất.
+                            </div>
+
+                            <div class="alert alert-warning" invisible="not sample_content or knowledge_collection_id or is_embedded">
+                                <strong>Chọn Knowledge Collection</strong> rồi bấm <b>"Embed Template"</b> để hoàn tất.
+                            </div>
+
+                            <div class="alert alert-primary" invisible="not sample_content or not knowledge_collection_id or is_embedded">
+                                <strong>Bấm "Embed Template"</strong> ở header để lưu template vào Knowledge Base.
+                                <br/>
+                                <small class="text-muted">Giúp tiết kiệm ~70% tokens khi generate tài liệu.</small>
+                            </div>
+
+                            <!-- Success message when embedded -->
+                            <div class="alert alert-success" invisible="not is_embedded">
+                                <strong>Template đã được embed!</strong>
+                                Khi generate, hệ thống sẽ tự động tìm phần mẫu phù hợp.
+                                <br/>
+                                <small class="text-muted">Nếu thay đổi nội dung, bấm "Re-embed" để cập nhật.</small>
+                            </div>
+
+                            <!-- Extracted content (readonly display or editable) -->
+                            <group string="Nội dung đã trích xuất" invisible="not sample_content">
+                                <field name="sample_content" nolabel="1"
+                                       style="min-height: 300px;"/>
+                            </group>
                         </page>
+
+                        <!-- Tab 2: Cấu hình AI -->
                         <page string="Cấu hình AI" name="prompts">
                             <group>
-                                <field name="system_prompt"/>
+                                <field name="system_prompt" placeholder="Hướng dẫn cho AI về vai trò và cách viết..."/>
                             </group>
                             <group>
-                                <field name="user_prompt_template"/>
+                                <field name="user_prompt_template" placeholder="Mẫu prompt gửi đến AI..."/>
                             </group>
                             <div class="alert alert-info">
-                                <strong>Biến có thể dùng:</strong>
-                                <ul>
-                                    <li><code>{sample}</code> - Nội dung mẫu</li>
+                                <strong>Biến có thể dùng trong User Prompt:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li><code>{sample}</code> - Nội dung mẫu (hoặc chunks liên quan nếu đã embed)</li>
                                     <li><code>{context}</code> - Yêu cầu từ người dùng</li>
                                 </ul>
                             </div>
                         </page>
+
+                        <!-- Tab 3: Thông tin khác -->
+                        <page string="Thông tin" name="info">
+                            <group>
+                                <group string="Thông tin chung">
+                                    <field name="code"/>
+                                    <field name="sequence"/>
+                                    <field name="description"/>
+                                </group>
+                                <group string="Thống kê">
+                                    <field name="generation_count" readonly="1"/>
+                                    <field name="create_date" readonly="1"/>
+                                    <field name="write_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
                     </notebook>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -58,9 +142,42 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="category_id"/>
+                <field name="is_embedded" widget="boolean" string="RAG"/>
+                <field name="knowledge_collection_id" optional="hide"/>
                 <field name="generation_count" string="Đã tạo"/>
                 <field name="active" column_invisible="1"/>
             </list>
+        </field>
+    </record>
+
+    <!-- Template Kanban View -->
+    <record id="llm_document_template_view_kanban" model="ir.ui.view">
+        <field name="name">llm.document.template.kanban</field>
+        <field name="model">llm.document.template</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="category_id"/>
+                <field name="is_embedded"/>
+                <field name="generation_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between">
+                            <field name="name" class="fw-bold"/>
+                            <span t-if="record.is_embedded.raw_value" class="badge text-bg-success">RAG ✓</span>
+                            <span t-else="" class="badge text-bg-secondary">No RAG</span>
+                        </div>
+                        <div class="text-muted small">
+                            <field name="category_id"/>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge text-bg-info">
+                                <field name="generation_count"/> đã tạo
+                            </span>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
         </field>
     </record>
 
@@ -72,9 +189,16 @@
             <search>
                 <field name="name"/>
                 <field name="category_id"/>
+                <field name="knowledge_collection_id"/>
+                <separator/>
+                <filter string="Đã Embed (RAG)" name="embedded" domain="[('is_embedded', '=', True)]"/>
+                <filter string="Chưa Embed" name="not_embedded" domain="[('is_embedded', '=', False)]"/>
+                <separator/>
                 <filter string="Đã lưu trữ" name="inactive" domain="[('active', '=', False)]"/>
                 <group expand="0" string="Nhóm theo">
                     <filter string="Thể loại" name="group_category" context="{'group_by': 'category_id'}"/>
+                    <filter string="Collection" name="group_collection" context="{'group_by': 'knowledge_collection_id'}"/>
+                    <filter string="Trạng thái RAG" name="group_embedded" context="{'group_by': 'is_embedded'}"/>
                 </group>
             </search>
         </field>
@@ -84,13 +208,17 @@
     <record id="llm_document_template_action" model="ir.actions.act_window">
         <field name="name">Mẫu tài liệu</field>
         <field name="res_model">llm.document.template</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,kanban,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Tạo mẫu tài liệu đầu tiên!
             </p>
             <p>
                 Upload hoặc nhập nội dung văn bản mẫu để AI tham khảo khi tạo tài liệu mới.
+            </p>
+            <p class="text-muted">
+                <b>Tip:</b> Sử dụng tính năng <b>RAG (Embed Template)</b> để tiết kiệm tokens
+                và tăng tốc độ generate cho các template dài.
             </p>
         </field>
     </record>
