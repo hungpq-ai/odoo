@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit llm.resource form view to add access control fields -->
+    <record id="llm_resource_form_view_security" model="ir.ui.view">
+        <field name="name">llm.resource.form.security</field>
+        <field name="model">llm.resource</field>
+        <field name="inherit_id" ref="llm_knowledge.view_llm_resource_form"/>
+        <field name="arch" type="xml">
+            <!-- Add Access Control tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Access Control" name="access_control">
+                    <group>
+                        <group string="Ownership">
+                            <field name="owner_id"/>
+                            <field name="department_group_id"/>
+                        </group>
+                        <group string="Visibility">
+                            <field name="visibility" widget="radio"/>
+                        </group>
+                    </group>
+                    <group string="Restricted Access" invisible="visibility != 'restricted'">
+                        <field name="allowed_user_ids" widget="many2many_tags"/>
+                        <field name="allowed_group_ids" widget="many2many_tags"/>
+                    </group>
+                    <div class="alert alert-info" role="alert" invisible="visibility != 'public'">
+                        <strong>Public:</strong> All internal users can access this resource in RAG search.
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="visibility != 'private'">
+                        <strong>Private:</strong> Only the owner can access this resource in RAG search.
+                    </div>
+                    <div class="alert alert-secondary" role="alert" invisible="visibility != 'restricted'">
+                        <strong>Restricted:</strong> Only specified users/groups or department group members can access this resource.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit llm.resource tree view to show visibility -->
+    <record id="llm_resource_tree_view_security" model="ir.ui.view">
+        <field name="name">llm.resource.tree.security</field>
+        <field name="model">llm.resource</field>
+        <field name="inherit_id" ref="llm_knowledge.view_llm_resource_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="owner_id" optional="show"/>
+                <field name="visibility" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit llm.resource search view to add filters -->
+    <record id="llm_resource_search_view_security" model="ir.ui.view">
+        <field name="name">llm.resource.search.security</field>
+        <field name="model">llm.resource</field>
+        <field name="inherit_id" ref="llm_knowledge.view_llm_resource_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="My Resources" name="my_resources" domain="[('owner_id', '=', uid)]"/>
+                <filter string="Public" name="public" domain="[('visibility', '=', 'public')]"/>
+                <filter string="Private" name="private" domain="[('visibility', '=', 'private')]"/>
+                <filter string="Restricted" name="restricted" domain="[('visibility', '=', 'restricted')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Owner" name="group_owner" context="{'group_by': 'owner_id'}"/>
+                    <filter string="Visibility" name="group_visibility" context="{'group_by': 'visibility'}"/>
+                    <filter string="Department Group" name="group_department" context="{'group_by': 'department_group_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+    <!-- ============================================== -->
+    <!-- Collection Access Control Views              -->
+    <!-- ============================================== -->
+
+    <!-- Inherit llm.knowledge.collection form view to add access control fields -->
+    <record id="llm_collection_form_view_security" model="ir.ui.view">
+        <field name="name">llm.knowledge.collection.form.security</field>
+        <field name="model">llm.knowledge.collection</field>
+        <field name="inherit_id" ref="llm_knowledge.view_llm_knowledge_collection_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Access Control">
+                    <group>
+                        <field name="owner_id"/>
+                        <field name="department_group_id"/>
+                    </group>
+                    <group>
+                        <field name="visibility" widget="radio"/>
+                    </group>
+                </group>
+                <div class="alert alert-info" role="alert" invisible="visibility != 'public'">
+                    <strong>Public:</strong> All internal users can see and use this collection.
+                </div>
+                <div class="alert alert-warning" role="alert" invisible="visibility != 'private'">
+                    <strong>Private:</strong> Only the owner can see and use this collection.
+                </div>
+                <div class="alert alert-secondary" role="alert" invisible="visibility != 'restricted'">
+                    <strong>Restricted:</strong> Only department group members can see and use this collection.
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit llm.knowledge.collection tree view to show visibility -->
+    <record id="llm_collection_tree_view_security" model="ir.ui.view">
+        <field name="name">llm.knowledge.collection.tree.security</field>
+        <field name="model">llm.knowledge.collection</field>
+        <field name="inherit_id" ref="llm_knowledge.view_llm_knowledge_collection_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="owner_id" optional="show"/>
+                <field name="visibility" optional="show"/>
+                <field name="department_group_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit llm.knowledge.collection search view to add filters -->
+    <record id="llm_collection_search_view_security" model="ir.ui.view">
+        <field name="name">llm.knowledge.collection.search.security</field>
+        <field name="model">llm.knowledge.collection</field>
+        <field name="inherit_id" ref="llm_knowledge.view_llm_knowledge_collection_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter string="My Collections" name="my_collections" domain="[('owner_id', '=', uid)]"/>
+                <filter string="Public" name="public" domain="[('visibility', '=', 'public')]"/>
+                <filter string="Private" name="private" domain="[('visibility', '=', 'private')]"/>
+                <filter string="Restricted" name="restricted" domain="[('visibility', '=', 'restricted')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Owner" name="group_owner" context="{'group_by': 'owner_id'}"/>
+                    <filter string="Visibility" name="group_visibility" context="{'group_by': 'visibility'}"/>
+                    <filter string="Department" name="group_department" context="{'group_by': 'department_group_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Glossary Form View -->
+    <record id="view_llm_glossary_form" model="ir.ui.view">
+        <field name="name">llm.glossary.form</field>
+        <field name="model">llm.glossary</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="toggle_active" icon="fa-archive">
+                            <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Glossary Name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="term_count" string="Terms"/>
+                        </group>
+                        <group>
+                            <field name="collection_ids" widget="many2many_tags"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Terms">
+                            <field name="term_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="term"/>
+                                    <field name="definition"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Description">
+                            <field name="description" nolabel="1" placeholder="Description of this glossary..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Glossary List View -->
+    <record id="view_llm_glossary_list" model="ir.ui.view">
+        <field name="name">llm.glossary.list</field>
+        <field name="model">llm.glossary</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="term_count" string="Terms"/>
+                <field name="collection_ids" widget="many2many_tags"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Glossary Search View -->
+    <record id="view_llm_glossary_search" model="ir.ui.view">
+        <field name="name">llm.glossary.search</field>
+        <field name="model">llm.glossary</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="collection_ids"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Glossary Action -->
+    <record id="action_llm_glossary" model="ir.actions.act_window">
+        <field name="name">Glossaries</field>
+        <field name="res_model">llm.glossary</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your first glossary</p>
+            <p>Glossaries contain terms and definitions that help AI understand internal terminology.</p>
+        </field>
+    </record>
+
+    <!-- Glossary Term Form View (for popup) -->
+    <record id="view_llm_glossary_term_form" model="ir.ui.view">
+        <field name="name">llm.glossary.term.form</field>
+        <field name="model">llm.glossary.term</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="glossary_id"/>
+                    <field name="term"/>
+                    <field name="definition"/>
+                    <field name="active"/>
+                </group>
+            </form>
+        </field>
+    </record>
+</odoo>

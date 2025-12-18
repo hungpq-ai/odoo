@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit Thread Form View to add RAG fields -->
+    <record id="llm_thread_view_form_inherit_knowledge" model="ir.ui.view">
+        <field name="name">llm.thread.view.form.inherit.knowledge</field>
+        <field name="model">llm.thread</field>
+        <field name="inherit_id" ref="llm_thread.llm_thread_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Add RAG settings group after the existing groups -->
+            <xpath expr="//group[last()]" position="after">
+                <group string="Document RAG Settings" name="rag_settings">
+                    <group>
+                        <field name="collection_ids" widget="many2many_tags"/>
+                        <field name="rag_enabled"/>
+                    </group>
+                    <group invisible="not rag_enabled">
+                        <field name="rag_top_k"/>
+                        <field name="rag_min_similarity"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Thread List View to show RAG status -->
+    <record id="llm_thread_view_tree_inherit_knowledge" model="ir.ui.view">
+        <field name="name">llm.thread.view.tree.inherit.knowledge</field>
+        <field name="model">llm.thread</field>
+        <field name="inherit_id" ref="llm_thread.llm_thread_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='model_id']" position="after">
+                <field name="rag_enabled" string="RAG"/>
+                <field name="collection_ids" widget="many2many_tags" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Thread Search View to add RAG filters -->
+    <record id="llm_thread_view_search_inherit_knowledge" model="ir.ui.view">
+        <field name="name">llm.thread.view.search.inherit.knowledge</field>
+        <field name="model">llm.thread</field>
+        <field name="inherit_id" ref="llm_thread.llm_thread_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="collection_ids"/>
+                <filter string="RAG Enabled" name="rag_enabled" domain="[('rag_enabled', '=', True)]"/>
+                <filter string="With Collections" name="has_collections" domain="[('collection_ids', '!=', False)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -51,6 +51,15 @@ class LLMKnowledgeCollection(models.Model):
         string="Domain Filters",
         help="Domain filters to select records for RAG document creation",
     )
+    # Glossaries for AI context (Many2many - can be shared across collections)
+    glossary_ids = fields.Many2many(
+        "llm.glossary",
+        "llm_glossary_collection_rel",
+        "collection_id",
+        "glossary_id",
+        string="Glossaries",
+        help="Glossaries with terms and definitions to help AI understand context",
+    )
     resource_count = fields.Integer(
         string="Resource Count",
         compute="_compute_resource_count",

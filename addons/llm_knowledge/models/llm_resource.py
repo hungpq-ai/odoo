@@ -493,7 +493,7 @@ class LLMResource(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create to handle collection_ids and apply chunking settings"""
+        """Override create to handle collection_ids, apply chunking settings, and auto-process"""
         # Create the resources first
         resources = super().create(vals_list)
 
@@ -510,6 +510,17 @@ class LLMResource(models.Model):
                     "parser": collection.default_parser,
                 }
                 resource.write(update_vals)
+
+                # Auto-process resource immediately (retrieve -> parse -> chunk -> embed)
+                try:
+                    resource.process_resource()
+                    _logger.info(
+                        f"Auto-processed resource {resource.id} ({resource.name}) on creation"
+                    )
+                except Exception as e:
+                    _logger.warning(
+                        f"Failed to auto-process resource {resource.id} on creation: {e}"
+                    )
 
         return resources
 
@@ -569,3 +580,178 @@ class LLMResource(models.Model):
             self._handle_collection_ids_change(resources_collections)
 
         return result
+
+    # ==========================================
+    # Cron Job Methods for Auto-Indexing
+    # ==========================================
+
+    @api.model
+    def _cron_auto_process_resources(self, batch_size=50):
+        """
+        Cron job to automatically process resources through the pipeline.
+
+        This method:
+        1. Finds all resources not yet in 'ready' state
+        2. Processes them through retrieve -> parse -> chunk -> embed
+        3. Runs in batches to avoid timeout
+
+        Args:
+            batch_size: Number of resources to process per run (default: 50)
+
+        Returns:
+            dict: Summary of processed resources
+        """
+        _logger.info("Starting auto-process resources cron job")
+
+        # Find resources that need processing (not in ready state, not locked)
+        now = fields.Datetime.now()
+        stale_lock_threshold = now - timedelta(minutes=10)
+
+        domain = [
+            ("state", "!=", "ready"),
+            ("collection_ids", "!=", False),  # Must belong to at least one collection
+            "|",
+            ("lock_date", "=", False),
+            ("lock_date", "<", stale_lock_threshold),
+        ]
+
+        resources_to_process = self.search(domain, limit=batch_size)
+
+        if not resources_to_process:
+            _logger.info("No resources to auto-process")
+            return {"processed": 0, "success": True}
+
+        _logger.info(f"Found {len(resources_to_process)} resources to auto-process")
+
+        processed_count = 0
+        error_count = 0
+
+        for resource in resources_to_process:
+            try:
+                resource.process_resource()
+                processed_count += 1
+                _logger.info(f"Auto-processed resource {resource.id}: {resource.name}")
+            except Exception as e:
+                error_count += 1
+                _logger.error(f"Error auto-processing resource {resource.id}: {str(e)}")
+                # Unlock the resource so it can be retried
+                resource._unlock()
+
+        _logger.info(
+            f"Auto-process cron completed: {processed_count} processed, {error_count} errors"
+        )
+
+        return {
+            "processed": processed_count,
+            "errors": error_count,
+            "success": error_count == 0,
+        }
+
+    @api.model
+    def _cron_auto_index_attachments(self, collection_id=None, batch_size=20):
+        """
+        Cron job to automatically index new ir.attachments into collections.
+
+        This method:
+        1. Finds attachments not yet linked to any llm.resource
+        2. Creates llm.resource records for them
+        3. Adds them to the specified collection (or default collection)
+        4. Triggers processing
+
+        Args:
+            collection_id: Specific collection ID to add resources to (optional)
+            batch_size: Number of attachments to process per run (default: 20)
+
+        Returns:
+            dict: Summary of indexed attachments
+        """
+        _logger.info("Starting auto-index attachments cron job")
+
+        # Get existing attachment IDs that are already resources
+        existing_attachment_ids = self.search([
+            ("res_model", "=", "ir.attachment")
+        ]).mapped("res_id")
+
+        # Find attachments that are not yet indexed
+        # Filter: PDF, DOC, TXT files that are binary type
+        attachment_domain = [
+            ("id", "not in", existing_attachment_ids),
+            ("type", "=", "binary"),
+            ("mimetype", "in", [
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "text/plain",
+                "text/markdown",
+                "text/html",
+            ]),
+        ]
+
+        attachments = self.env["ir.attachment"].sudo().search(
+            attachment_domain, limit=batch_size
+        )
+
+        if not attachments:
+            _logger.info("No new attachments to index")
+            return {"indexed": 0, "success": True}
+
+        _logger.info(f"Found {len(attachments)} attachments to index")
+
+        # Get collection to add resources to
+        collection = None
+        if collection_id:
+            collection = self.env["llm.knowledge.collection"].browse(collection_id)
+            if not collection.exists():
+                _logger.warning(f"Collection {collection_id} not found")
+                collection = None
+
+        # If no specific collection, try to find a default one
+        if not collection:
+            collection = self.env["llm.knowledge.collection"].search([
+                ("active", "=", True),
+                ("store_id", "!=", False),
+                ("embedding_model_id", "!=", False),
+            ], limit=1)
+
+        if not collection:
+            _logger.warning("No valid collection found for auto-indexing")
+            return {"indexed": 0, "success": False, "error": "No collection available"}
+
+        # Get ir.model for ir.attachment
+        attachment_model = self.env["ir.model"].sudo().search([
+            ("model", "=", "ir.attachment")
+        ], limit=1)
+
+        if not attachment_model:
+            _logger.error("ir.attachment model not found")
+            return {"indexed": 0, "success": False, "error": "Model not found"}
+
+        indexed_count = 0
+        error_count = 0
+
+        for attachment in attachments:
+            try:
+                # Create llm.resource for this attachment
+                resource = self.create({
+                    "name": attachment.name or f"Attachment {attachment.id}",
+                    "model_id": attachment_model.id,
+                    "res_id": attachment.id,
+                    "collection_ids": [(4, collection.id)],
+                })
+                indexed_count += 1
+                _logger.info(f"Created resource {resource.id} for attachment {attachment.id}")
+
+            except Exception as e:
+                error_count += 1
+                _logger.error(f"Error indexing attachment {attachment.id}: {str(e)}")
+
+        _logger.info(
+            f"Auto-index attachments completed: {indexed_count} indexed, {error_count} errors"
+        )
+
+        return {
+            "indexed": indexed_count,
+            "errors": error_count,
+            "collection": collection.name,
+            "success": error_count == 0,
+        }

@@ -1,0 +1,16 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_llm_api_key_manager,llm.api.key.manager,model_llm_api_key,llm.group_llm_manager,1,1,1,1
+access_llm_resource_hr_manager,llm.resource.hr.manager,llm_knowledge.model_llm_resource,llm_security.group_hr_department_manager,1,1,1,1
+access_llm_resource_sale_manager,llm.resource.sale.manager,llm_knowledge.model_llm_resource,llm_security.group_sale_department_manager,1,1,1,1
+access_llm_chunk_hr_manager,llm.chunk.hr.manager,llm_knowledge.model_llm_knowledge_chunk,llm_security.group_hr_department_manager,1,1,1,1
+access_llm_chunk_sale_manager,llm.chunk.sale.manager,llm_knowledge.model_llm_knowledge_chunk,llm_security.group_sale_department_manager,1,1,1,1
+access_llm_collection_hr_manager,llm.collection.hr.manager,llm_knowledge.model_llm_knowledge_collection,llm_security.group_hr_department_manager,1,1,1,1
+access_llm_collection_sale_manager,llm.collection.sale.manager,llm_knowledge.model_llm_knowledge_collection,llm_security.group_sale_department_manager,1,1,1,1
+access_llm_upload_wizard_hr_manager,llm.upload.wizard.hr.manager,llm_knowledge.model_llm_upload_resource_wizard,llm_security.group_hr_department_manager,1,1,1,1
+access_llm_upload_wizard_sale_manager,llm.upload.wizard.sale.manager,llm_knowledge.model_llm_upload_resource_wizard,llm_security.group_sale_department_manager,1,1,1,1
+access_llm_chunk_embedding_hr_manager,llm.chunk.embedding.hr.manager,llm_pgvector.model_llm_knowledge_chunk_embedding,llm_security.group_hr_department_manager,1,1,1,1
+access_llm_chunk_embedding_sale_manager,llm.chunk.embedding.sale.manager,llm_pgvector.model_llm_knowledge_chunk_embedding,llm_security.group_sale_department_manager,1,1,1,1
+access_ir_model_hr_manager,ir.model.hr.manager.read,base.model_ir_model,llm_security.group_hr_department_manager,1,0,0,0
+access_ir_model_sale_manager,ir.model.sale.manager.read,base.model_ir_model,llm_security.group_sale_department_manager,1,0,0,0
+access_ir_model_fields_hr_manager,ir.model.fields.hr.manager.read,base.model_ir_model_fields,llm_security.group_hr_department_manager,1,0,0,0
+access_ir_model_fields_sale_manager,ir.model.fields.sale.manager.read,base.model_ir_model_fields,llm_security.group_sale_department_manager,1,0,0,0

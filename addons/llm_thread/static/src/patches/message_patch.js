@@ -4,6 +4,7 @@ import { LLMToolMessage } from "../components/llm_tool_message/llm_tool_message"
 import { Message } from "@mail/core/common/message";
 import { Message as MessageModel } from "@mail/core/common/message_model";
 import { patch } from "@web/core/utils/patch";
+import { rpc } from "@web/core/network/rpc";
 
 /**
  * PATCH 1: Message Component Static Properties
@@ -19,6 +20,7 @@ patch(Message, {
  * These methods are used by the component template and rendering logic
  */
 patch(Message.prototype, {
+
   /**
    * Check if this message is in an LLM thread
    */
@@ -38,6 +40,13 @@ patch(Message.prototype, {
    */
   get isToolMessage() {
     return this.isLLMMessage && this.llmRole === "tool";
+  },
+
+  /**
+   * Check if message is an assistant message (for feedback buttons)
+   */
+  get isAssistantMessage() {
+    return this.isLLMMessage && this.llmRole === "assistant";
   },
 
   /**
@@ -71,6 +80,31 @@ patch(Message.prototype, {
     }
 
     return className;
+  },
+
+  /**
+   * Handle vote button click
+   */
+  async onVote(voteValue) {
+    const message = this.props.message;
+    const currentVote = message.user_vote || 0;
+
+    // Toggle vote: if same vote clicked again, remove it
+    const newVote = currentVote === voteValue ? 0 : voteValue;
+
+    try {
+      await rpc("/web/dataset/call_kw/mail.message/set_user_vote", {
+        model: "mail.message",
+        method: "set_user_vote",
+        args: [[message.id], newVote],
+        kwargs: {},
+      });
+
+      // Update local state
+      message.user_vote = newVote;
+    } catch (error) {
+      console.error("Failed to set vote:", error);
+    }
   },
 });
 

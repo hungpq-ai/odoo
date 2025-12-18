@@ -9,7 +9,7 @@
     """,
     "category": "Technical",
     "version": "18.0.1.1.0",
-    "depends": ["llm", "llm_store"],
+    "depends": ["llm", "llm_store", "llm_thread"],
     "external_dependencies": {
         "python": ["requests", "markdownify", "PyMuPDF", "numpy"],
     },
@@ -18,12 +18,15 @@
     "data": [
         # Security must come first
         "security/ir.model.access.csv",
-        # Data / Actions
+        # Data / Actions / Cron Jobs
         "data/server_actions.xml",
+        "data/ir_cron.xml",
         # Views for models
         "views/llm_resource_views.xml",  # Consolidated llm.resource views
         "views/llm_knowledge_collection_views.xml",
         "views/llm_knowledge_chunk_views.xml",
+        "views/llm_glossary_views.xml",
+        "views/llm_thread_views.xml",  # RAG settings for chat threads
         # Wizard Views
         "wizards/create_rag_resource_wizard_views.xml",
         "wizards/upload_resource_wizard_views.xml",
@@ -31,6 +34,12 @@
         "views/llm_resource_menu.xml",
         "views/menu.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "llm_knowledge/static/src/components/**/*.js",
+            "llm_knowledge/static/src/components/**/*.xml",
+        ],
+    },
     "images": [
         "static/description/banner.jpeg",
     ],

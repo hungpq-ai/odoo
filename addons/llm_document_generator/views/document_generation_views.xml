@@ -7,21 +7,23 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <!-- Draft state buttons -->
-                    <button name="action_generate" type="object" string="Generate Document" class="btn-primary" invisible="state != 'draft'" confirm="Document generation may take 30-60 seconds. Click OK to start."/>
+                    <!-- Draft -->
+                    <button name="action_generate" type="object" string="Generate" class="btn-primary" icon="fa-magic" invisible="state != 'draft'" confirm="Document generation may take 30-60 seconds. Click OK to start."/>
 
-                    <!-- Done state buttons -->
-                    <button name="action_start_review" type="object" string="Review &amp; Edit" class="btn-primary" invisible="state != 'done'"/>
-                    <button name="action_regenerate" type="object" string="Regenerate" class="btn-secondary" invisible="state not in ('done', 'error')" confirm="Regenerate document? This may take 30-60 seconds."/>
-                    <button name="action_export_pdf" type="object" string="Download PDF" class="btn-success" invisible="state not in ('done', 'review')"/>
-                    <button name="action_export_docx" type="object" string="Download DOCX" class="btn-success" invisible="state not in ('done', 'review')"/>
+                    <!-- Review group -->
+                    <button name="action_start_review" type="object" string="Manual Review" class="btn-primary" icon="fa-edit" invisible="state != 'done'"/>
+                    <button name="action_ai_review" type="object" string="AI Review" class="btn-secondary" icon="fa-magic" invisible="state not in ('done', 'review')" confirm="AI will analyze and review the document. This may take 30-60 seconds. Continue?"/>
+                    <button name="action_apply_review" type="object" string="Apply Feedback" class="btn-primary" icon="fa-check-circle" invisible="state != 'review'" confirm="AI will edit the document based on your feedback. Continue?"/>
+                    <button name="action_approve_document" type="object" string="Approve" class="btn-success" icon="fa-thumbs-up" invisible="state != 'review'"/>
 
-                    <!-- Review state buttons -->
-                    <button name="action_apply_review" type="object" string="Apply Feedback" class="btn-primary" invisible="state != 'review'" confirm="AI will edit the document based on your feedback. Continue?"/>
-                    <button name="action_approve_document" type="object" string="Approve Document" class="btn-success" invisible="state != 'review'"/>
+                    <!-- Download group -->
+                    <button name="action_export_pdf" type="object" string="PDF" class="btn-success" icon="fa-file-pdf-o" invisible="state not in ('done', 'review')"/>
+                    <button name="action_export_docx" type="object" string="DOCX" class="btn-success" icon="fa-file-word-o" invisible="state not in ('done', 'review')"/>
 
-                    <!-- Common buttons -->
-                    <button name="action_reset_draft" type="object" string="Reset to Draft" invisible="state == 'draft'"/>
+                    <!-- Redo group -->
+                    <button name="action_regenerate" type="object" string="Regenerate" class="btn-secondary" icon="fa-refresh" invisible="state not in ('done', 'error')" confirm="Regenerate document? This may take 30-60 seconds."/>
+                    <button name="action_reset_draft" type="object" string="Reset" class="btn-link" icon="fa-undo" invisible="state == 'draft'"/>
+
                     <field name="state" widget="statusbar" statusbar_visible="draft,generating,review,done"/>
                 </header>
                 <sheet>
@@ -79,6 +81,13 @@
                         </page>
                         <page string="Markdown" name="markdown">
                             <field name="generated_markdown" readonly="1"/>
+                        </page>
+                        <page string="AI Review" name="ai_review" invisible="not last_ai_review_date">
+                            <group>
+                                <field name="last_ai_review_date" readonly="1"/>
+                            </group>
+                            <separator string="Review Result"/>
+                            <field name="ai_review_result" nolabel="1" readonly="1"/>
                         </page>
                     </notebook>
                 </sheet>

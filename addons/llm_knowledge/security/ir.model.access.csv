@@ -7,5 +7,9 @@ access_llm_knowledge_collection_user,llm.knowledge.collection.user,model_llm_kno
 access_llm_knowledge_collection_manager,llm.knowledge.collection.manager,model_llm_knowledge_collection,llm.group_llm_manager,1,1,1,1
 access_llm_knowledge_domain_user,llm.knowledge.domain.user,model_llm_knowledge_domain,base.group_user,1,0,0,0
 access_llm_knowledge_domain_manager,llm.knowledge.domain.manager,model_llm_knowledge_domain,llm.group_llm_manager,1,1,1,1
+access_llm_glossary_user,llm.glossary.user,model_llm_glossary,base.group_user,1,0,0,0
+access_llm_glossary_manager,llm.glossary.manager,model_llm_glossary,llm.group_llm_manager,1,1,1,1
+access_llm_glossary_term_user,llm.glossary.term.user,model_llm_glossary_term,base.group_user,1,0,0,0
+access_llm_glossary_term_manager,llm.glossary.term.manager,model_llm_glossary_term,llm.group_llm_manager,1,1,1,1
 access_llm_create_rag_resource_wizard_manager,llm.create.rag.resource.wizard.manager,model_llm_create_rag_resource_wizard,llm.group_llm_manager,1,1,1,1
 access_llm_upload_resource_wizard_manager,llm.upload.resource.wizard.manager,model_llm_upload_resource_wizard,llm.group_llm_manager,1,1,1,1

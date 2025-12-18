@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    LLM Security Module - Security Definitions
+    ==========================================
+
+    This file defines:
+    1. Security groups for LLM Security features
+    2. Record rules for RAG access control
+    3. Access rights for sensitive operations
+    -->
+
+    <!-- Security Group for Security Admin -->
+    <record id="group_llm_security_admin" model="res.groups">
+        <field name="name">LLM Security Administrator</field>
+        <field name="category_id" ref="llm.module_category_llm"/>
+        <field name="implied_ids" eval="[(4, ref('llm.group_llm_manager'))]"/>
+        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+        <field name="comment">
+            Full access to LLM security features including:
+            - API key management and encryption
+            - Master key rotation
+            - Access control configuration
+        </field>
+    </record>
+
+    <!-- Department Manager Groups -->
+    <record id="group_hr_department_manager" model="res.groups">
+        <field name="name">HR Department Manager</field>
+        <field name="category_id" ref="llm.module_category_llm"/>
+        <field name="comment">Can create and manage LLM resources for HR department</field>
+    </record>
+
+    <record id="group_sale_department_manager" model="res.groups">
+        <field name="name">Sale Department Manager</field>
+        <field name="category_id" ref="llm.module_category_llm"/>
+        <field name="comment">Can create and manage LLM resources for Sale department</field>
+    </record>
+
+    <!-- Department Groups (for employees) -->
+    <record id="group_hr_department" model="res.groups">
+        <field name="name">HR Department</field>
+        <field name="category_id" ref="llm.module_category_llm"/>
+        <field name="comment">HR department employees - can read HR restricted resources</field>
+    </record>
+
+    <record id="group_sale_department" model="res.groups">
+        <field name="name">Sale Department</field>
+        <field name="category_id" ref="llm.module_category_llm"/>
+        <field name="comment">Sale department employees - can read Sale restricted resources</field>
+    </record>
+
+    <!-- ============================================== -->
+    <!-- Record Rules for llm.resource (VISIBILITY)    -->
+    <!-- ============================================== -->
+
+    <!-- Rule 1: Internal Users can see PUBLIC resources -->
+    <record id="llm_resource_public_rule" model="ir.rule">
+        <field name="name">LLM Resources: Public Access for Internal Users</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[('visibility', '=', 'public')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 2: Users can see their OWN resources (any visibility) -->
+    <record id="llm_resource_owner_rule" model="ir.rule">
+        <field name="name">LLM Resources: Owner Full Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[('owner_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 3: Users in allowed_user_ids can see RESTRICTED resources -->
+    <record id="llm_resource_allowed_users_rule" model="ir.rule">
+        <field name="name">LLM Resources: Allowed Users Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[
+            ('visibility', '=', 'restricted'),
+            ('allowed_user_ids', 'in', user.id)
+        ]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 4: Users in allowed_group_ids can see RESTRICTED resources -->
+    <record id="llm_resource_allowed_groups_rule" model="ir.rule">
+        <field name="name">LLM Resources: Allowed Groups Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[
+            ('visibility', '=', 'restricted'),
+            ('allowed_group_ids', 'in', user.groups_id.ids)
+        ]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 4b: Users in department_group_id can see RESTRICTED resources -->
+    <record id="llm_resource_department_group_rule" model="ir.rule">
+        <field name="name">LLM Resources: Department Group Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[
+            ('visibility', '=', 'restricted'),
+            ('department_group_id', 'in', user.groups_id.ids)
+        ]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 5: LLM Managers have full access to ALL resources -->
+    <record id="llm_resource_manager_rule" model="ir.rule">
+        <field name="name">LLM Resources: Manager Full Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('llm.group_llm_manager'))]"/>
+    </record>
+
+    <!-- ============================================== -->
+    <!-- Record Rules for Department Managers          -->
+    <!-- (Can create/manage resources for their dept)  -->
+    <!-- ============================================== -->
+
+    <!-- Rule 6a: HR Department Manager can create resources -->
+    <record id="llm_resource_hr_manager_create_rule" model="ir.rule">
+        <field name="name">LLM Resources: HR Manager Create Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('group_hr_department_manager'))]"/>
+    </record>
+
+    <!-- Rule 6b: Sale Department Manager can create resources -->
+    <record id="llm_resource_sale_manager_create_rule" model="ir.rule">
+        <field name="name">LLM Resources: Sale Manager Create Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('group_sale_department_manager'))]"/>
+    </record>
+
+    <!-- Rule 6c: HR Department Manager can manage resources in their department -->
+    <record id="llm_resource_hr_manager_manage_rule" model="ir.rule">
+        <field name="name">LLM Resources: HR Manager Department Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[('department_group_id.name', '=', 'HR Department')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_hr_department_manager'))]"/>
+    </record>
+
+    <!-- Rule 6d: Sale Department Manager can manage resources in their department -->
+    <record id="llm_resource_sale_manager_manage_rule" model="ir.rule">
+        <field name="name">LLM Resources: Sale Manager Department Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_resource"/>
+        <field name="domain_force">[('department_group_id.name', '=', 'Sale Department')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_sale_department_manager'))]"/>
+    </record>
+
+    <!-- ============================================== -->
+    <!-- Record Rules for llm.knowledge.chunk          -->
+    <!-- (Chunks follow their parent resource's rules) -->
+    <!-- ============================================== -->
+
+    <!-- Rule 1: Internal Users can see chunks from PUBLIC resources -->
+    <record id="llm_chunk_public_rule" model="ir.rule">
+        <field name="name">LLM Chunks: Public Resources Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_chunk"/>
+        <field name="domain_force">[('resource_id.visibility', '=', 'public')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 2: Users can see chunks from their OWN resources -->
+    <record id="llm_chunk_owner_rule" model="ir.rule">
+        <field name="name">LLM Chunks: Owner Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_chunk"/>
+        <field name="domain_force">[('resource_id.owner_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 3: Allowed users can see chunks from RESTRICTED resources -->
+    <record id="llm_chunk_allowed_users_rule" model="ir.rule">
+        <field name="name">LLM Chunks: Allowed Users Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_chunk"/>
+        <field name="domain_force">[
+            ('resource_id.visibility', '=', 'restricted'),
+            ('resource_id.allowed_user_ids', 'in', user.id)
+        ]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 4: Allowed groups can see chunks from RESTRICTED resources -->
+    <record id="llm_chunk_allowed_groups_rule" model="ir.rule">
+        <field name="name">LLM Chunks: Allowed Groups Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_chunk"/>
+        <field name="domain_force">[
+            ('resource_id.visibility', '=', 'restricted'),
+            ('resource_id.allowed_group_ids', 'in', user.groups_id.ids)
+        ]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 4b: Department group members can see chunks from RESTRICTED resources -->
+    <record id="llm_chunk_department_group_rule" model="ir.rule">
+        <field name="name">LLM Chunks: Department Group Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_chunk"/>
+        <field name="domain_force">[
+            ('resource_id.visibility', '=', 'restricted'),
+            ('resource_id.department_group_id', 'in', user.groups_id.ids)
+        ]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 5: LLM Managers have full access to ALL chunks -->
+    <record id="llm_chunk_manager_rule" model="ir.rule">
+        <field name="name">LLM Chunks: Manager Full Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_chunk"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('llm.group_llm_manager'))]"/>
+    </record>
+
+    <!-- ============================================== -->
+    <!-- Chunk Rules for Department Managers           -->
+    <!-- ============================================== -->
+
+    <!-- Rule 6a: HR Department Manager can manage chunks of their department's resources -->
+    <record id="llm_chunk_hr_manager_rule" model="ir.rule">
+        <field name="name">LLM Chunks: HR Manager Department Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_chunk"/>
+        <field name="domain_force">[('resource_id.department_group_id.name', '=', 'HR Department')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_hr_department_manager'))]"/>
+    </record>
+
+    <!-- Rule 6b: Sale Department Manager can manage chunks of their department's resources -->
+    <record id="llm_chunk_sale_manager_rule" model="ir.rule">
+        <field name="name">LLM Chunks: Sale Manager Department Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_chunk"/>
+        <field name="domain_force">[('resource_id.department_group_id.name', '=', 'Sale Department')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_sale_department_manager'))]"/>
+    </record>
+
+    <!-- ============================================== -->
+    <!-- Record Rules for llm.knowledge.collection     -->
+    <!-- ============================================== -->
+
+    <!-- Rule 1: Internal Users can see PUBLIC collections -->
+    <record id="llm_collection_public_rule" model="ir.rule">
+        <field name="name">LLM Collections: Public Access for Internal Users</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_collection"/>
+        <field name="domain_force">[('visibility', '=', 'public')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 2: Users can see their OWN collections -->
+    <record id="llm_collection_owner_rule" model="ir.rule">
+        <field name="name">LLM Collections: Owner Full Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_collection"/>
+        <field name="domain_force">[('owner_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 3: Users in department_group_id can see RESTRICTED collections -->
+    <record id="llm_collection_department_group_rule" model="ir.rule">
+        <field name="name">LLM Collections: Department Group Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_collection"/>
+        <field name="domain_force">[
+            ('visibility', '=', 'restricted'),
+            ('department_group_id', 'in', user.groups_id.ids)
+        ]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Rule 4: LLM Managers have full access to ALL collections -->
+    <record id="llm_collection_manager_rule" model="ir.rule">
+        <field name="name">LLM Collections: Manager Full Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_collection"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('llm.group_llm_manager'))]"/>
+    </record>
+
+    <!-- Rule 5a: HR Department Manager can create collections -->
+    <record id="llm_collection_hr_manager_create_rule" model="ir.rule">
+        <field name="name">LLM Collections: HR Manager Create Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_collection"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('group_hr_department_manager'))]"/>
+    </record>
+
+    <!-- Rule 5b: Sale Department Manager can create collections -->
+    <record id="llm_collection_sale_manager_create_rule" model="ir.rule">
+        <field name="name">LLM Collections: Sale Manager Create Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_collection"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+        <field name="groups" eval="[(4, ref('group_sale_department_manager'))]"/>
+    </record>
+
+    <!-- Rule 5c: HR Department Manager can manage collections in their department -->
+    <record id="llm_collection_hr_manager_manage_rule" model="ir.rule">
+        <field name="name">LLM Collections: HR Manager Department Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_collection"/>
+        <field name="domain_force">[('department_group_id.name', '=', 'HR Department')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_hr_department_manager'))]"/>
+    </record>
+
+    <!-- Rule 5d: Sale Department Manager can manage collections in their department -->
+    <record id="llm_collection_sale_manager_manage_rule" model="ir.rule">
+        <field name="name">LLM Collections: Sale Manager Department Access</field>
+        <field name="model_id" ref="llm_knowledge.model_llm_knowledge_collection"/>
+        <field name="domain_force">[('department_group_id.name', '=', 'Sale Department')]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_sale_department_manager'))]"/>
+    </record>
+
+    <!-- API Key Parameter Protection -->
+    <!-- Only Security Admin can access API key parameters -->
+    <record id="ir_config_parameter_api_key_rule" model="ir.rule">
+        <field name="name">Config Parameters: Protect LLM API Keys</field>
+        <field name="model_id" ref="base.model_ir_config_parameter"/>
+        <field name="domain_force">[
+            '|',
+            ('key', 'not like', 'llm.api_key.%'),
+            ('key', 'not like', 'llm.security.%')
+        ]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- Security Admin can access all config parameters -->
+    <record id="ir_config_parameter_security_admin_rule" model="ir.rule">
+        <field name="name">Config Parameters: Security Admin Full Access</field>
+        <field name="model_id" ref="base.model_ir_config_parameter"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+        <field name="groups" eval="[(4, ref('group_llm_security_admin'))]"/>
+    </record>
+
+</odoo>

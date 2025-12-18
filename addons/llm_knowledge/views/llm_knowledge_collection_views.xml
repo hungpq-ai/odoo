@@ -21,20 +21,6 @@
             class="btn-primary"
           />
                     <button
-            name="process_resources"
-            string="Process Resources"
-            type="object"
-            class="btn-primary"
-            confirm="This will process resources through the RAG pipeline until chunked state. Continue?"
-          />
-                    <button
-            name="action_embed_resources"
-            string="Embed Resources"
-            type="object"
-            class="btn-primary"
-            confirm="This will embed all resource chunks with the selected embedding model. Continue?"
-          />
-                    <button
             name="reindex_collection"
             string="Reindex Collection"
             type="object"
@@ -151,6 +137,11 @@
                                     <field name="sequence" />
                                 </list>
                             </field>
+                        </page>
+                        <page string="Glossaries">
+                            <group>
+                                <field name="glossary_ids" widget="many2many_tags"/>
+                            </group>
                         </page>
                         <page string="Domain Filters">
                             <field

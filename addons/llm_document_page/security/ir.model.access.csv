@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_llm_document_review_wizard_user,llm.document.review.wizard.user,model_llm_document_review_wizard,base.group_user,1,1,1,1

@@ -15,8 +15,8 @@
         - JSON-RPC 2.0 protocol support
         - Auto-connect on Odoo startup
     """,
-    "author": "Apexive Solutions LLC",
-    "website": "https://github.com/apexive/odoo-llm",
+    "author": "Hung Pham Quang",
+    "website": "https://github.com/hungpq-ai/odoo/tree/main/addons/llm_mcp",
     "license": "LGPL-3",
     "depends": ["base", "llm", "llm_tool"],
     "data": [

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!-- Extend the thread header to add Collections dropdown -->
+    <t t-name="llm_knowledge.LLMThreadHeaderCollections" t-inherit="llm_thread.LLMThreadHeader" t-inherit-mode="extension">
+        <!-- Add Collections dropdown before Tools dropdown -->
+        <xpath expr="//Dropdown[last()]" position="before">
+            <!-- Collections/RAG Dropdown -->
+            <Dropdown>
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                        t-att-class="{'btn-success': currentCollections.length > 0}">
+                    <i class="fa fa-book me-1"/>
+                    <span>RAG</span>
+                    <t t-if="currentCollections.length > 0">
+                        (<t t-esc="currentCollections.length"/>)
+                    </t>
+                </button>
+                <t t-set-slot="content">
+                    <!-- Search Input -->
+                    <div class="px-3 py-2">
+                        <div class="input-group input-group-sm">
+                            <input type="text"
+                                   class="form-control"
+                                   placeholder="Search collections..."
+                                   t-model="state.collectionSearchQuery"
+                                   t-on-input="onCollectionSearchInput"/>
+                            <button t-if="state.collectionSearchQuery"
+                                    class="btn btn-outline-secondary"
+                                    t-on-click="clearCollectionSearch">
+                                <i class="fa fa-times"/>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"/>
+
+                    <!-- Collections List -->
+                    <div style="max-height: 300px; overflow-y: auto; min-width: 280px;">
+                        <t t-foreach="availableCollections" t-as="collection" t-key="collection.id">
+                            <div class="dropdown-item">
+                                <div class="form-check">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           t-att-id="'collection_' + collection.id"
+                                           t-att-checked="isCollectionSelected(collection)"
+                                           t-att-disabled="state.isLoadingUpdate"
+                                           t-on-change="() => this.toggleCollection(collection)"/>
+                                    <label class="form-check-label w-100"
+                                           t-att-for="'collection_' + collection.id"
+                                           t-att-class="{'text-muted': state.isLoadingUpdate}">
+                                        <span t-esc="collection.name"/>
+                                    </label>
+                                </div>
+                            </div>
+                        </t>
+                        <div t-if="availableCollections.length === 0"
+                             class="dropdown-item-text text-muted">
+                            <t t-if="state.collectionSearchQuery">
+                                No collections found
+                            </t>
+                            <t t-else="">
+                                No document collections available
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- RAG Info -->
+                    <t t-if="currentCollections.length > 0">
+                        <div class="dropdown-divider"/>
+                        <div class="px-3 py-2 text-muted small">
+                            <i class="fa fa-info-circle me-1"/>
+                            AI will search selected collections for relevant documents
+                        </div>
+                    </t>
+                </t>
+            </Dropdown>
+        </xpath>
+    </t>
+</templates>

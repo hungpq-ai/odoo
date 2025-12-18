@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Document Review Wizard Form View -->
+    <record id="view_document_review_wizard_form" model="ir.ui.view">
+        <field name="name">llm.document.review.wizard.form</field>
+        <field name="model">llm.document.review.wizard</field>
+        <field name="arch" type="xml">
+            <form string="AI Document Review">
+                <group invisible="state != 'reviewing'">
+                    <div class="text-center">
+                        <i class="fa fa-spinner fa-spin fa-3x"/>
+                        <h3>Reviewing document...</h3>
+                        <p>Please wait while AI analyzes the document.</p>
+                    </div>
+                </group>
+                <group invisible="state == 'reviewing'">
+                    <group>
+                        <field name="document_id" readonly="1"/>
+                        <field name="model_id" invisible="state == 'done'"/>
+                        <field name="state" invisible="1"/>
+                    </group>
+                </group>
+                <notebook invisible="state == 'reviewing'">
+                    <page string="Review Prompt" invisible="state == 'done'">
+                        <field name="review_prompt" nolabel="1"/>
+                    </page>
+                    <page string="Review Result" invisible="state != 'done'">
+                        <field name="review_result" nolabel="1"/>
+                    </page>
+                </notebook>
+                <footer>
+                    <button
+                        name="action_review"
+                        string="Start Review"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state != 'draft'"
+                    />
+                    <button
+                        name="action_review"
+                        string="Review Again"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="state != 'done'"
+                    />
+                    <button
+                        name="action_close"
+                        string="Close"
+                        type="object"
+                        class="btn-secondary"
+                    />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for the wizard -->
+    <record id="action_document_review_wizard" model="ir.actions.act_window">
+        <field name="name">AI Review Document</field>
+        <field name="res_model">llm.document.review.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

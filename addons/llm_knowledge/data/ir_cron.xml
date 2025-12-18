@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+    Cron Jobs for LLM Knowledge Auto-Indexing
+    =========================================
+
+    These cron jobs automatically process and index documents into the Vector DB.
+
+    1. Auto Process Resources: Processes resources through retrieve -> parse -> chunk -> embed
+    2. Auto Index Attachments: Finds new attachments and creates resources for them (disabled by default)
+    -->
+
+    <!-- Cron Job 1: Auto Process Resources -->
+    <!-- Runs every 10 minutes to process resources that are not yet in 'ready' state -->
+    <record id="ir_cron_auto_process_resources" model="ir.cron">
+        <field name="name">LLM Knowledge: Auto Process Resources</field>
+        <field name="model_id" ref="model_llm_resource"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_auto_process_resources(batch_size=50)</field>
+        <field name="interval_number">10</field>
+        <field name="interval_type">minutes</field>
+        <field name="active">True</field>
+    </record>
+
+    <!-- Cron Job 2: Auto Index Attachments -->
+    <!-- Runs every hour to find new attachments and create resources for them -->
+    <!-- DISABLED BY DEFAULT - Enable manually if you want automatic attachment indexing -->
+    <record id="ir_cron_auto_index_attachments" model="ir.cron">
+        <field name="name">LLM Knowledge: Auto Index Attachments</field>
+        <field name="model_id" ref="model_llm_resource"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_auto_index_attachments(batch_size=20)</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active">False</field>
+    </record>
+
+</odoo>

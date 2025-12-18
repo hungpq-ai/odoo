@@ -1,6 +1,11 @@
+import logging
+
 from markdownify import markdownify as md
 
-from odoo import fields, models
+from odoo import api, fields, models
+from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 
 class DocumentPage(models.Model):
@@ -15,6 +20,25 @@ class DocumentPage(models.Model):
         index=True,
         copy=False,
         help="The original URL from which this page content was retrieved, if applicable.",
+    )
+
+    # == AI Review Fields ==
+    last_review_date = fields.Datetime(
+        string="Last AI Review",
+        readonly=True,
+        copy=False,
+    )
+    review_count = fields.Integer(
+        string="Review Count",
+        default=0,
+        readonly=True,
+        copy=False,
+    )
+    last_review_result = fields.Html(
+        string="Last Review Result",
+        readonly=True,
+        copy=False,
+        sanitize=False,
     )
 
     def llm_get_retrieval_details(self):
@@ -69,3 +93,17 @@ class DocumentPage(models.Model):
                 "rawcontent": "\n\n".join(content_parts),
             }
         ]
+
+    def action_ai_review(self):
+        """Open AI Review wizard for this document."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "AI Review Document",
+            "res_model": "llm.document.review.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_document_id": self.id,
+            },
+        }

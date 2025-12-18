@@ -181,9 +181,15 @@ class LLMKnowledgeChunk(models.Model):
         return vector_search_term, filtered_domain
 
     def _get_vector_search_collections(
-        self, vector_search_term, query_vector, collection_id
+        self, vector_search_term, query_vector, collection_id, collection_ids=None
     ):
         """Get collections eligible for vector search.
+
+        Args:
+            vector_search_term: The search query text
+            query_vector: Pre-computed query vector (optional)
+            collection_id: Single collection ID to search (optional)
+            collection_ids: List of collection IDs to search (optional)
 
         Returns:
             llm.knowledge.collection recordset
@@ -191,6 +197,7 @@ class LLMKnowledgeChunk(models.Model):
         collections = self.env["llm.knowledge.collection"]
 
         if collection_id:
+            # Single collection specified
             collection = self.env["llm.knowledge.collection"].browse(collection_id)
             if (
                 collection.exists()
@@ -198,7 +205,18 @@ class LLMKnowledgeChunk(models.Model):
                 and (query_vector or collection.embedding_model_id)
             ):
                 collections |= collection
+        elif collection_ids:
+            # Multiple collections specified (from domain like collection_ids in [...])
+            domain = [
+                ("id", "in", collection_ids),
+                ("active", "=", True),
+                ("store_id", "!=", False),
+            ]
+            if vector_search_term and not query_vector:
+                domain.append(("embedding_model_id", "!=", False))
+            collections = self.env["llm.knowledge.collection"].search(domain)
         else:
+            # No specific collections, search all active ones
             domain = [
                 ("active", "=", True),
                 ("store_id", "!=", False),
@@ -253,6 +271,29 @@ class LLMKnowledgeChunk(models.Model):
                 domain, field_names, offset=offset, limit=limit, order=order
             )
 
+    def _extract_collection_ids_from_domain(self, domain):
+        """Extract collection IDs from domain if present.
+
+        Looks for domain clauses like:
+        - ('collection_ids', 'in', [1, 2, 3])
+        - ('collection_ids', '=', 1)
+
+        Returns:
+            list: Collection IDs found in domain, or None if not specified
+        """
+        if not domain:
+            return None
+
+        for clause in domain:
+            if isinstance(clause, (list, tuple)) and len(clause) >= 3:
+                field, operator, value = clause[0], clause[1], clause[2]
+                if field == "collection_ids":
+                    if operator == "in" and isinstance(value, (list, tuple)):
+                        return list(value)
+                    elif operator == "=" and isinstance(value, int):
+                        return [value]
+        return None
+
     @api.model
     def search(self, args, offset=0, limit=None, order=None, **kwargs):
         count = kwargs.pop("count", False)
@@ -285,9 +326,13 @@ class LLMKnowledgeChunk(models.Model):
                 **kwargs,
             )
 
+        # Extract collection_ids from domain to limit vector search scope
+        collection_ids_from_domain = self._extract_collection_ids_from_domain(args)
+
         # Get eligible collections
         collections = self._get_vector_search_collections(
-            vector_search_term, query_vector, specific_collection_id
+            vector_search_term, query_vector, specific_collection_id,
+            collection_ids=collection_ids_from_domain
         )
 
         if not collections:
@@ -347,6 +392,10 @@ class LLMKnowledgeChunk(models.Model):
         # List of tuples: (score, chunk_id)
         aggregated_results = []
 
+        _logger.info(f"Vector search: collections={collections.mapped('name')}, "
+                     f"vector_search_term={vector_search_term[:50] if vector_search_term else None}, "
+                     f"min_similarity={min_similarity}, limit={limit}")
+
         for collection in collections:
             current_query_vector = query_vector
             if not current_query_vector and vector_search_term:
@@ -354,7 +403,14 @@ class LLMKnowledgeChunk(models.Model):
                     collection.embedding_model_id.id
                 )
 
+            _logger.info(f"Searching collection {collection.name} (id={collection.id}): "
+                         f"has_query_vector={bool(current_query_vector)}, "
+                         f"has_store={bool(collection.store_id)}, "
+                         f"embedding_model={collection.embedding_model_id.name if collection.embedding_model_id else None}")
+
             if not current_query_vector or not collection.store_id:
+                _logger.warning(f"Skipping collection {collection.name}: "
+                               f"no query_vector={not current_query_vector}, no store={not collection.store_id}")
                 continue
 
             try:
@@ -366,14 +422,17 @@ class LLMKnowledgeChunk(models.Model):
                     min_similarity=min_similarity,
                     offset=0,
                 )
+                _logger.info(f"Collection {collection.name} returned {len(results)} results")
                 for result in results:
                     score = result.get("score", 0.0)
                     chunk_id = result.get("id")
+                    _logger.info(f"  Result: chunk_id={chunk_id}, score={score}")
                     aggregated_results.append((score, chunk_id))
             except Exception as e:
                 _logger.error(f"Error searching collection {collection.name}: {e}")
                 continue
 
+        _logger.info(f"Total aggregated results: {len(aggregated_results)}")
         if not aggregated_results:
             return 0 if count else self.browse([])
 

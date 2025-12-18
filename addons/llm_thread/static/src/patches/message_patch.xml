@@ -39,6 +39,27 @@
                     </t>
                 </div>
             </t>
+
+            <!-- Feedback buttons for assistant messages -->
+            <t t-if="isAssistantMessage">
+                <div class="o_llm_feedback mt-2 pt-2 border-top d-flex align-items-center gap-2">
+                    <span class="text-muted small me-1">Was this helpful?</span>
+                    <button
+                        t-att-class="'btn btn-sm ' + (message.user_vote === 1 ? 'btn-success' : 'btn-outline-secondary')"
+                        t-on-click="() => this.onVote(1)"
+                        title="Like"
+                    >
+                        <i class="fa fa-thumbs-up"/>
+                    </button>
+                    <button
+                        t-att-class="'btn btn-sm ' + (message.user_vote === -1 ? 'btn-danger' : 'btn-outline-secondary')"
+                        t-on-click="() => this.onVote(-1)"
+                        title="Dislike"
+                    >
+                        <i class="fa fa-thumbs-down"/>
+                    </button>
+                </div>
+            </t>
         </xpath>
     </t>
 </templates>

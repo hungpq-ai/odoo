@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Menu under LLM -->
+    <menuitem
+        id="menu_llm_analytics"
+        name="Analytics"
+        parent="llm.menu_llm_root"
+        sequence="110"/>
+
+    <!-- Dashboard -->
+    <menuitem
+        id="menu_llm_analytics_dashboard"
+        name="Dashboard"
+        parent="menu_llm_analytics"
+        action="llm_usage_log_action"
+        sequence="10"/>
+
+    <!-- Request Log -->
+    <menuitem
+        id="menu_llm_analytics_requests"
+        name="Request Log"
+        parent="menu_llm_analytics"
+        action="llm_usage_log_action_list"
+        sequence="20"/>
+
+    <!-- Reports submenu -->
+    <menuitem
+        id="menu_llm_analytics_reports"
+        name="Reports"
+        parent="menu_llm_analytics"
+        sequence="30"/>
+
+    <menuitem
+        id="menu_llm_analytics_top_users"
+        name="Top Users"
+        parent="menu_llm_analytics_reports"
+        action="llm_usage_log_action_top_users"
+        sequence="10"/>
+
+    <menuitem
+        id="menu_llm_analytics_cost"
+        name="Cost Analysis"
+        parent="menu_llm_analytics_reports"
+        action="llm_usage_log_action_cost"
+        sequence="20"/>
+
+    <menuitem
+        id="menu_llm_analytics_feedback"
+        name="Feedback Report"
+        parent="menu_llm_analytics_reports"
+        action="llm_usage_log_action_feedback"
+        sequence="30"/>
+</odoo>

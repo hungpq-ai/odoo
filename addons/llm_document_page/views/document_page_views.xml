@@ -1,17 +1,51 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
+    <!-- Add AI Review button to document.page form -->
     <record id="view_wiki_form_inherit_llm" model="ir.ui.view">
         <field name="name">document.page.form.inherit.llm</field>
         <field name="model">document.page</field>
         <field name="inherit_id" ref="document_page.view_wiki_form" />
         <field name="arch" type="xml">
+            <!-- Add AI Review button in header -->
+            <xpath expr="//form/header" position="inside">
+                <button
+                    name="action_ai_review"
+                    string="AI Review"
+                    type="object"
+                    class="btn-secondary"
+                    icon="fa-magic"
+                />
+            </xpath>
+            <!-- Add source_url field -->
             <xpath expr="//page[@name='info']/group/group[1]" position="inside">
                 <field
-          name="source_url"
-          widget="url"
-          readonly="1"
-          invisible="not source_url"
-        />
+                    name="source_url"
+                    widget="url"
+                    readonly="1"
+                    invisible="not source_url"
+                />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Add AI Review tab to show review history -->
+    <record id="view_wiki_form_inherit_llm_review" model="ir.ui.view">
+        <field name="name">document.page.form.inherit.llm.review</field>
+        <field name="model">document.page</field>
+        <field name="inherit_id" ref="document_page.view_wiki_form" />
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="AI Review" name="ai_review" invisible="not last_review_date">
+                    <group>
+                        <group>
+                            <field name="last_review_date" readonly="1"/>
+                            <field name="review_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <separator string="Last Review Result"/>
+                    <field name="last_review_result" nolabel="1" readonly="1"/>
+                </page>
             </xpath>
         </field>
     </record>

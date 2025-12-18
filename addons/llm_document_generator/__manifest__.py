@@ -19,7 +19,8 @@
         - AI-powered document generation
         - Export generated documents
     """,
-    "author": "Odoo LLM",
+    "author": "Hung Pham Quang",
+    "website": "https://github.com/hungpq-ai/odoo/tree/main/addons/llm_document_generator",
     "depends": [
         "llm_knowledge",
         "llm_assistant",

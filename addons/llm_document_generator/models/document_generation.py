@@ -59,6 +59,18 @@ class DocumentGeneration(models.Model):
     review_count = fields.Integer(string="Review Count", default=0)
     review_history = fields.Html(string="Review History", readonly=True, sanitize=False)
 
+    # AI Auto-Review fields
+    ai_review_result = fields.Html(
+        string="AI Review Result",
+        readonly=True,
+        sanitize=False,
+        help="Automated AI review with checklist analysis",
+    )
+    last_ai_review_date = fields.Datetime(
+        string="Last AI Review",
+        readonly=True,
+    )
+
     # LLM Selection
     selected_model_id = fields.Many2one(
         "llm.model",
@@ -916,3 +928,120 @@ Return the COMPLETE EDITED DOCUMENT (no explanations, only return the content)."
                 os.unlink(html_path)
             if os.path.exists(pdf_path):
                 os.unlink(pdf_path)
+
+    def action_ai_review(self):
+        """Run AI automatic review on the document with checklist analysis."""
+        from datetime import datetime
+
+        self.ensure_one()
+
+        if not self.generated_markdown:
+            raise UserError("No content to review. Please generate the document first.")
+
+        model = self.selected_model_id
+        if not model:
+            raise UserError("Please select an AI Model.")
+
+        try:
+
+            # AI Review prompt with checklist
+            review_prompt = f"""You are a professional document reviewer. Analyze the following document and provide a detailed review.
+
+## Document to Review:
+{self.generated_markdown}
+
+## Review Checklist:
+Please evaluate the document on the following criteria:
+
+### 1. FORMAT (Định dạng)
+- [ ] Consistent heading structure (Cấu trúc tiêu đề nhất quán)
+- [ ] Proper use of lists and tables (Sử dụng danh sách và bảng hợp lý)
+- [ ] Clear section organization (Tổ chức phần rõ ràng)
+- [ ] Appropriate formatting - bold, italic, etc. (Định dạng phù hợp)
+
+### 2. LOGIC (Logic)
+- [ ] Clear and logical flow of information (Luồng thông tin rõ ràng và logic)
+- [ ] No contradictory statements (Không có phát biểu mâu thuẫn)
+- [ ] Complete coverage of the topic (Bao quát đầy đủ chủ đề)
+- [ ] Proper cause-effect relationships (Quan hệ nhân quả hợp lý)
+
+### 3. CONTENT QUALITY (Chất lượng nội dung)
+- [ ] Accurate information (Thông tin chính xác)
+- [ ] No spelling or grammar errors (Không có lỗi chính tả/ngữ pháp)
+- [ ] Appropriate level of detail (Mức độ chi tiết phù hợp)
+- [ ] Clear and concise language (Ngôn ngữ rõ ràng, súc tích)
+
+### 4. CONFLICTS (Xung đột)
+- [ ] No internal contradictions (Không có mâu thuẫn nội bộ)
+- [ ] Consistent terminology usage (Sử dụng thuật ngữ nhất quán)
+- [ ] No duplicate information (Không có thông tin trùng lặp)
+- [ ] Aligned with document purpose (Phù hợp với mục đích tài liệu)
+
+## Instructions:
+1. Review the document against each checklist item
+2. Mark items as ✅ (pass), ❌ (fail), or ⚠️ (needs improvement)
+3. Provide specific comments for each failed or warning item
+4. Suggest concrete improvements where needed
+5. Give an overall assessment score (1-10) at the end
+6. Write your review in Vietnamese
+
+Format your output as follows:
+## Kết quả Review
+
+### 1. FORMAT
+[checklist results and comments]
+
+### 2. LOGIC
+[checklist results and comments]
+
+### 3. CONTENT QUALITY
+[checklist results and comments]
+
+### 4. CONFLICTS
+[checklist results and comments]
+
+### Đề xuất cải thiện
+[specific suggestions]
+
+### Đánh giá tổng quan
+[overall score and summary]"""
+
+            system_prompt = "You are a professional document reviewer. Provide detailed, constructive feedback in Vietnamese."
+
+            # Call LLM
+            _logger.info(f"Starting AI review for document {self.id}")
+            review_result = self._call_llm(model, system_prompt, review_prompt)
+
+            if not review_result:
+                raise UserError("AI did not return any review result.")
+
+            # Convert to HTML
+            html_result = self._convert_markdown_to_html(review_result)
+
+            # Style the checkboxes
+            html_result = html_result.replace("✅", '<span style="color: green; font-weight: bold;">✅</span>')
+            html_result = html_result.replace("❌", '<span style="color: red; font-weight: bold;">❌</span>')
+            html_result = html_result.replace("⚠️", '<span style="color: orange; font-weight: bold;">⚠️</span>')
+
+            # Update record
+            self.write({
+                "ai_review_result": html_result,
+                "last_ai_review_date": datetime.now(),
+            })
+
+            _logger.info(f"AI review completed for document {self.id}")
+
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": "AI Review Complete",
+                    "message": "Document has been reviewed. Check the AI Review tab for results.",
+                    "type": "success",
+                    "sticky": False,
+                },
+            }
+
+        except Exception as e:
+            _logger.error(f"Error during AI review: {str(e)}")
+            raise UserError(f"Error during review: {str(e)}")
