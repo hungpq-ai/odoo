@@ -15,6 +15,11 @@ patch(Message, {
 });
 
 /**
+ * AI Avatar URL - hardcoded for assistant/tool messages
+ */
+const AI_AVATAR_URL = "/llm_thread/static/src/img/ai_avatar.png";
+
+/**
  * PATCH 2: Message Component Prototype Methods
  * Adds UI rendering logic and getters for LLM message detection and styling
  * These methods are used by the component template and rendering logic
@@ -26,6 +31,16 @@ patch(Message.prototype, {
    */
   get isLLMMessage() {
     return this.props.message?.model === "llm.thread";
+  },
+
+  /**
+   * Override avatar URL for AI messages (assistant and tool)
+   */
+  get authorAvatarUrl() {
+    if (this.isLLMMessage && (this.llmRole === "assistant" || this.llmRole === "tool")) {
+      return AI_AVATAR_URL;
+    }
+    return super.authorAvatarUrl;
   },
 
   /**

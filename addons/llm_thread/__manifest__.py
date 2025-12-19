@@ -65,6 +65,11 @@ Contact: support@apexive.com
             "llm_thread/static/src/components/llm_tool_message/llm_tool_message.js",
             "llm_thread/static/src/components/llm_tool_message/llm_tool_message.xml",
             "llm_thread/static/src/components/llm_tool_message/llm_tool_message.scss",
+            # Floating AI Chat Button - Quick access from any page
+            # TODO: Debug why these files are not being found by Odoo
+            # "llm_thread/static/src/components/llm_floating_button/llm_floating_button.js",
+            # "llm_thread/static/src/components/llm_floating_button/llm_floating_button.xml",
+            # "llm_thread/static/src/components/llm_floating_button/llm_floating_button.scss",
             # Patches - Safe extensions of mail components with conditional LLM logic
             "llm_thread/static/src/patches/composer_patch.js",
             "llm_thread/static/src/patches/thread_patch.js",

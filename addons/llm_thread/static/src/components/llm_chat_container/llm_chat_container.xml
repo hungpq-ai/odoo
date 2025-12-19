@@ -24,7 +24,7 @@
                 <div
           class="o-llm-sidebar-header d-flex align-items-center justify-content-between border-bottom p-3"
         >
-                    <h6 class="mb-0 text-muted">Conversations</h6>
+                    <h6 class="mb-0 text-white">Conversations</h6>
                     <button
             class="btn btn-sm btn-primary"
             t-on-click="createNewThread"
@@ -99,7 +99,7 @@
                     <!-- Expanded state: Header content + collapse button on right -->
                     <t t-if="!state.isSidebarCollapsed">
                         <div class="d-flex align-items-center gap-2">
-                            <h6 class="mb-0 text-muted">Conversations</h6>
+                            <h6 class="mb-0 text-white">Conversations</h6>
                             <button
                 class="btn btn-sm btn-primary"
                 t-on-click="createNewThread"
@@ -233,14 +233,17 @@
             />
                     </div>
 
-                    <!-- Streaming indicator -->
+                    <!-- Streaming indicator with typing animation -->
                     <div
             t-if="isStreaming"
-            class="o-llm-streaming-indicator p-2 text-center text-muted flex-shrink-0"
+            class="o-llm-streaming-indicator flex-shrink-0"
           >
-                        <i
-              class="fa fa-circle-o-notch fa-spin"
-            /> AI is thinking...
+                        <div class="o-llm-typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span>AI is generating response...</span>
                     </div>
 
                     <!-- Composer area - reuse mail's Composer component -->
@@ -261,15 +264,18 @@
           t-else=""
           class="d-flex justify-content-center align-items-center h-100 text-muted"
         >
-                    <div class="text-center">
-                        <i class="fa fa-robot fa-3x mb-3" />
-                        <h5>AI Chat</h5>
-                        <p class="mb-3">No active conversation</p>
+                    <div class="text-center" style="max-width: 400px;">
+                        <div class="mb-4">
+                            <i class="fa fa-robot" style="font-size: 4rem; color: #10a37f; opacity: 0.8;" />
+                        </div>
+                        <h5 style="font-size: 1.5rem; font-weight: 600; color: #1a1a1a; margin-bottom: 0.75rem;">Welcome to AI Chat</h5>
+                        <p style="color: #666; font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6;">Start a conversation with AI assistant. Ask questions, get help with code, or explore ideas.</p>
                         <button
               class="btn btn-primary"
               t-on-click="createNewThread"
+              style="padding: 0.75rem 2rem; font-size: 1rem; border-radius: 0.75rem; background-color: #10a37f; border-color: #10a37f;"
             >
-                            <i class="fa fa-plus" /> Create New Thread
+                            <i class="fa fa-plus me-2" /> Start New Conversation
                         </button>
                     </div>
                 </div>

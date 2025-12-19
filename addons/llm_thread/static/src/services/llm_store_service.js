@@ -2,8 +2,9 @@
 
 import { _t } from "@web/core/l10n/translation";
 import { Deferred } from "@web/core/utils/concurrency";
-import { reactive } from "@odoo/owl";
+import { Component, reactive, xml, useState, onMounted, onWillUnmount } from "@odoo/owl";
 import { registry } from "@web/core/registry";
+import { useService } from "@web/core/utils/hooks";
 
 /**
  * LLM Store Service - Integrates with existing mail.store
@@ -190,6 +191,19 @@ export const llmStoreService = {
 
           case "done":
             this.stopStreaming(threadId);
+            break;
+
+          case "thread_update":
+            // Update thread properties (e.g., auto-generated title)
+            if (data.thread) {
+              const thread = mailStore.Thread.get({
+                model: "llm.thread",
+                id: data.thread.id,
+              });
+              if (thread && data.thread.name) {
+                thread.name = data.thread.name;
+              }
+            }
             break;
 
           case "tool_called":
@@ -502,3 +516,50 @@ export const llmStoreService = {
 };
 
 registry.category("services").add("llm.store", llmStoreService);
+
+/**
+ * Floating AI Chat Button - Shows on all pages except Chat page
+ * Allows quick access to AI Chat from anywhere in Odoo
+ */
+export class LLMFloatingButton extends Component {
+    static template = xml`
+        <div t-if="state.isVisible" class="o-llm-floating-button" t-on-click="openAIChat" title="Open AI Magenest Chat">
+            <img src="/llm_thread/static/src/img/ai_avatar.png" alt="AI Chat" class="o-llm-floating-avatar"/>
+        </div>
+    `;
+    static props = {};
+
+    setup() {
+        this.action = useService("action");
+        this.state = useState({ isVisible: true });
+
+        // Check visibility - hide when LLM Chat container is present
+        this.checkVisibility = () => {
+            const llmContainer = document.querySelector(".o_LLMChatContainer");
+            this.state.isVisible = !llmContainer;
+        };
+
+        onMounted(() => {
+            this.checkVisibility();
+            // Check periodically since DOM changes don't trigger hashchange
+            this.intervalId = setInterval(this.checkVisibility, 500);
+        });
+
+        onWillUnmount(() => {
+            if (this.intervalId) {
+                clearInterval(this.intervalId);
+            }
+        });
+    }
+
+    openAIChat() {
+        this.action.doAction("llm_thread.action_llm_chat", {
+            clearBreadcrumbs: false,
+        });
+    }
+}
+
+// Register as main component to show globally
+registry.category("main_components").add("LLMFloatingButton", {
+    Component: LLMFloatingButton,
+});

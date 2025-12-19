@@ -1,5 +1,6 @@
+// Modern Chat UI - Clean design
 .o_LLMChatContainer {
-  background-color: #f8f9fa;
+  background-color: #f5f5f5;
 
   // Force single column grid for composer (no avatar sidebar)
   .o-llm-composer-area .o-mail-Composer {
@@ -10,102 +11,107 @@
       "core-footer" !important;
   }
 
+  // ==========================================
+  // SIDEBAR STYLES - Dark Theme (ChatGPT style)
+  // ==========================================
   .o-llm-sidebar {
     flex-shrink: 0;
     min-width: 48px;
     transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    background-color: #fff;
-    border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+    background-color: #202123;
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
 
     .o-llm-sidebar-header {
       min-height: 56px;
-      background: linear-gradient(to bottom, #fff, #fafbfc);
+      background: #202123;
+      border-bottom-color: rgba(255, 255, 255, 0.1) !important;
 
       h6 {
         font-size: 0.8125rem;
-        font-weight: 600;
-        color: #495057;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.7);
         letter-spacing: 0.01em;
       }
 
       .btn-primary {
         padding: 0.375rem 0.625rem;
         font-size: 0.75rem;
-        border-radius: 0.375rem;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        border-radius: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        box-shadow: none;
         transition: all 0.15s ease;
 
         &:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
         }
       }
 
       .btn-secondary {
         background-color: transparent;
-        border-color: rgba(0, 0, 0, 0.08);
-        color: #6c757d;
+        border-color: rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.7);
 
         &:hover {
-          background-color: #f1f3f5;
-          border-color: rgba(0, 0, 0, 0.1);
+          background-color: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.3);
+          color: #fff;
         }
       }
     }
 
     .o-llm-thread-item {
       transition: all 0.15s ease;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
-      margin: 0 0.5rem;
-      border-radius: 0.375rem;
-      margin-bottom: 0.25rem;
+      border-bottom: none !important;
+      margin: 0.25rem 0.5rem;
+      border-radius: 0.5rem;
+      padding: 0.75rem !important;
 
       .fw-medium {
         font-size: 0.875rem;
-        color: #212529;
-        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 400;
       }
 
       .text-muted {
         font-size: 0.75rem;
-        color: #868e96 !important;
+        color: rgba(255, 255, 255, 0.5) !important;
       }
 
       &:hover:not(.o-llm-thread-active) {
-        background-color: #f8f9fa;
+        background-color: rgba(255, 255, 255, 0.1);
       }
 
       &.o-llm-thread-active {
-        background-color: var(--primary);
-        color: white;
-        box-shadow: 0 2px 4px rgba(var(--primary-rgb, 0, 123, 255), 0.25);
+        background-color: rgba(255, 255, 255, 0.15);
 
         .fw-medium {
           color: #fff;
         }
 
         .text-muted {
-          color: rgba(255, 255, 255, 0.75) !important;
+          color: rgba(255, 255, 255, 0.7) !important;
         }
       }
     }
 
-    // Empty state styling
+    // Empty state styling in sidebar
     .text-center.text-muted {
       padding: 2rem 1rem !important;
 
       .fa-comments-o {
-        color: #dee2e6;
-        margin-bottom: 0.75rem;
+        color: rgba(255, 255, 255, 0.3);
       }
 
       div {
         font-size: 0.875rem;
-        color: #6c757d;
+        color: rgba(255, 255, 255, 0.6);
       }
 
       small {
-        color: #adb5bd;
+        color: rgba(255, 255, 255, 0.4);
       }
     }
 
@@ -118,17 +124,13 @@
       z-index: 1055;
       width: 100%;
       max-width: 300px;
-      background-color: #fff;
+      background-color: #202123;
       transform: translateX(-100%);
       transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
 
       &.o-visible {
         transform: translateX(0);
-      }
-
-      .o-llm-sidebar-header {
-        min-height: 56px;
       }
 
       @media (max-width: 575px) {
@@ -145,19 +147,16 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.6);
     z-index: 1050;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1),
-      visibility 0ms linear 300ms;
-    backdrop-filter: blur(2px);
+    transition: opacity 300ms;
+    backdrop-filter: blur(4px);
 
     &.o-visible {
       opacity: 1;
       visibility: visible;
-      transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1),
-        visibility 0ms linear;
     }
   }
 
@@ -171,198 +170,160 @@
     }
   }
 
-  // Fix horizontal overflow on very small screens
-  @media (max-width: 575px) {
-    & > * {
-      min-width: 0;
-    }
-
-    .d-flex.align-items-center.p-2.border-bottom {
-      padding: 0.5rem !important;
-      flex-wrap: nowrap;
-      background-color: #fff;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
-
-      .btn-sm {
-        padding: 0.375rem 0.5rem;
-        min-width: auto;
-        border-radius: 0.375rem;
-      }
-
-      h6 {
-        font-size: 0.875rem;
-        margin-bottom: 0;
-        font-weight: 500;
-      }
-    }
-  }
-
-  // Main chat area
+  // ==========================================
+  // MAIN CHAT AREA
+  // ==========================================
   .flex-grow-1.d-flex.flex-column.h-100 {
     background-color: #fff;
-    border-radius: 0;
-
-    @media (min-width: 768px) {
-      margin: 0.5rem;
-      margin-left: 0;
-      border-radius: 0.5rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-      overflow: hidden;
-    }
   }
 
-  // Thread area
+  // ==========================================
+  // THREAD AREA - where messages are displayed
+  // ==========================================
   .o-llm-thread-area {
     background-color: #fff;
+    padding: 0 !important;
 
-    @media (max-width: 767px) {
-      padding: 0.75rem !important;
+    .o-mail-Thread {
+      padding: 0;
     }
   }
 
-  // Composer area
+  // ==========================================
+  // COMPOSER AREA
+  // ==========================================
   .o-llm-composer-area {
     background-color: #fff;
-    border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
-    padding: 1rem !important;
+    border-top: 1px solid #e5e5e5 !important;
+    padding: 1rem 1.5rem !important;
 
     @media (max-width: 767px) {
-      padding: 0.75rem !important;
+      padding: 0.75rem 1rem !important;
     }
+
+    // Keep default Odoo composer styling - no overrides needed
   }
 
-  // Streaming indicator
+  // ==========================================
+  // STREAMING INDICATOR
+  // ==========================================
   .o-llm-streaming-indicator {
-    background-color: #f8f9fa;
-    font-size: 0.8125rem;
-    color: #6c757d;
-    padding: 0.5rem 1rem !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.04);
-
-    .fa-circle-o-notch {
-      margin-right: 0.375rem;
-    }
+    background-color: #f7f7f8;
+    font-size: 0.875rem;
+    color: #666;
+    padding: 0.75rem 1.5rem !important;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
   }
 
-  // Thread list mobile optimization
-  .o-llm-thread-item {
-    @media (max-width: 767px) {
-      padding: 0.875rem !important;
-      min-height: 64px;
-    }
-  }
-
-  // Empty state
+  // ==========================================
+  // EMPTY STATE
+  // ==========================================
   .d-flex.justify-content-center.align-items-center.h-100.text-muted {
     background-color: #fff;
-
-    .text-center {
-      .fa-robot {
-        color: #dee2e6;
-        margin-bottom: 1rem;
-      }
-
-      h5 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.5rem;
-      }
-
-      p {
-        color: #868e96;
-        font-size: 0.875rem;
-      }
-
-      .btn-primary {
-        padding: 0.625rem 1.25rem;
-        font-size: 0.875rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 2px 4px rgba(var(--primary-rgb, 0, 123, 255), 0.2);
-        transition: all 0.15s ease;
-
-        &:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 8px rgba(var(--primary-rgb, 0, 123, 255), 0.25);
-        }
-      }
-    }
   }
 }
 
-// LLM Message enhancements
+// ==========================================
+// LLM MESSAGE STYLES - ChatGPT/Claude inspired
+// These target messages with .o-llm-message class added by patch
+// ==========================================
+
+// Base message styling for LLM messages
 .o-llm-message {
-  margin-bottom: 0.75rem;
+  padding: 1.5rem 2rem !important;
+  margin: 0 !important;
+  border-bottom: none !important;
 
-  &.o-llm-message-tool {
-    // Tool messages are already styled via .o_llm_tool_result
+  @media (max-width: 767px) {
+    padding: 1rem !important;
   }
 
-  &.o-llm-message-assistant {
-    .o-mail-Message-bubble {
-      background-color: #f8f9fa;
-      border: 1px solid rgba(0, 0, 0, 0.04);
-    }
-  }
-
-  &.o-llm-message-user {
-    .o-mail-Message-bubble {
-      background-color: var(--primary);
-      color: #fff;
-    }
+  // Content container - center and limit width
+  .o-mail-Message-content {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
   }
 }
 
-// Style images in LLM message bodies
+// Assistant messages - gray background like ChatGPT
+.o-llm-message-assistant {
+  background-color: #f7f7f8 !important;
+}
+
+// User messages - white background
+.o-llm-message-user {
+  background-color: #fff !important;
+}
+
+// Tool messages - compact
+.o-llm-message-tool {
+  background-color: #fff !important;
+  padding: 0.75rem 2rem !important;
+
+  @media (max-width: 767px) {
+    padding: 0.5rem 1rem !important;
+  }
+}
+
+// ==========================================
+// MESSAGE BODY STYLES
+// ==========================================
 .o-mail-Message-body {
-  font-size: 0.9375rem;
-  line-height: 1.6;
-  color: #212529;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #1a1a1a;
 
   img {
     max-width: 512px;
     width: 100%;
     height: auto;
     display: block;
-    margin: 0.75rem 0;
-    border-radius: 0.375rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     @media (max-width: 767px) {
       max-width: 100%;
     }
   }
 
-  // Code blocks styling
+  // Code blocks styling - dark theme
   pre {
-    background-color: #f6f8fa;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 0.375rem;
-    padding: 0.75rem;
-    font-size: 0.8125rem;
+    background-color: #1e1e1e;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-size: 0.875rem;
     line-height: 1.5;
     overflow-x: auto;
-    margin: 0.75rem 0;
+    margin: 1rem 0;
 
     code {
       background: transparent;
       padding: 0;
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      color: #d4d4d4;
     }
   }
 
   // Inline code
   code:not(pre code) {
-    background-color: #f1f3f5;
-    padding: 0.125rem 0.375rem;
+    background-color: #f0f0f0;
+    padding: 0.125rem 0.5rem;
     border-radius: 0.25rem;
-    font-size: 0.875em;
-    color: #e83e8c;
+    font-size: 0.9em;
+    color: #c7254e;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   }
 
   // Links
   a {
-    color: var(--primary);
+    color: #10a37f;
     text-decoration: none;
 
     &:hover {
@@ -373,45 +334,287 @@
   // Lists
   ul, ol {
     padding-left: 1.5rem;
-    margin: 0.5rem 0;
+    margin: 0.75rem 0;
 
     li {
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.375rem;
     }
   }
 
   // Paragraphs
   p {
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
 
     &:last-child {
       margin-bottom: 0;
     }
   }
 
+  // Tables
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+
+    th, td {
+      border: 1px solid #e5e5e5;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f7f7f8;
+      font-weight: 600;
+    }
+  }
+
   @media (max-width: 767px) {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
   }
 }
 
-// Message author styling
-.o-mail-Message-author {
-  font-weight: 600;
+// ==========================================
+// FEEDBACK SECTION STYLING
+// ==========================================
+.o-llm-feedback-section {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.8125rem;
-  color: #495057;
+  color: #666;
+
+  .o-llm-feedback-btn {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid #ddd;
+    background: transparent;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    &.active {
+      &[data-vote="1"] {
+        background-color: rgba(16, 163, 127, 0.1);
+        border-color: #10a37f;
+        color: #10a37f;
+      }
+
+      &[data-vote="-1"] {
+        background-color: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+        color: #ef4444;
+      }
+    }
+  }
 }
 
-// Message timestamp styling
-.o-mail-Message-date {
-  font-size: 0.6875rem;
-  color: #adb5bd;
+// ==========================================
+// TYPING INDICATOR ANIMATION
+// ==========================================
+.o-llm-typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #10a37f;
+    animation: typing-bounce 1.4s infinite ease-in-out;
+
+    &:nth-child(1) { animation-delay: -0.32s; }
+    &:nth-child(2) { animation-delay: -0.16s; }
+    &:nth-child(3) { animation-delay: 0s; }
+  }
 }
 
-// Utility classes
+@keyframes typing-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// ==========================================
+// SCROLLBAR STYLING
+// ==========================================
+.o-llm-thread-area {
+  scroll-behavior: smooth;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #d9d9e3;
+    border-radius: 4px;
+
+    &:hover {
+      background-color: #c5c5d2;
+    }
+  }
+}
+
+// Thread list scrollbar (dark sidebar)
+.o-llm-sidebar .flex-grow-1.overflow-auto {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+// ==========================================
+// AI AVATAR SIZE - Larger for LLM messages
+// ==========================================
+.o-llm-message-assistant,
+.o-llm-message-tool {
+  .o-mail-Message-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+}
+
+// ==========================================
+// UTILITY CLASSES
+// ==========================================
 .cursor-pointer {
   cursor: pointer;
 }
 
 .min-width-0 {
   min-width: 0;
+}
+
+// ==========================================
+// TOOL RESULT STYLING
+// ==========================================
+.o_llm_tool_result {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+
+  .o_llm_tool_result_header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #495057;
+
+    i {
+      color: #10a37f;
+    }
+  }
+
+  .o_llm_tool_result_content {
+    font-size: 0.875rem;
+
+    pre {
+      margin: 0;
+      padding: 0.5rem;
+      background-color: #1e1e1e;
+      border-radius: 0.25rem;
+
+      code {
+        color: #d4d4d4;
+      }
+    }
+  }
+}
+
+// ==========================================
+// FLOATING AI CHAT BUTTON
+// ==========================================
+.o-llm-floating-button {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #10a37f;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    z-index: 1040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    overflow: hidden;
+
+    &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        animation: none;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    .o-llm-floating-avatar {
+        width: 74px;
+        height: 74px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    // Pulse animation on load
+    animation: llm-pulse 2s ease-in-out infinite;
+
+    @keyframes llm-pulse {
+        0%, 100% {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+        50% {
+            box-shadow: 0 4px 20px rgba(16, 163, 127, 0.5);
+        }
+    }
+
+    // Mobile adjustments
+    @media (max-width: 767px) {
+        bottom: 16px;
+        right: 16px;
+        width: 60px;
+        height: 60px;
+
+        .o-llm-floating-avatar {
+            width: 52px;
+            height: 52px;
+        }
+    }
 }

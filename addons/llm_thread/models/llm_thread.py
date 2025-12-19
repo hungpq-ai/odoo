@@ -185,7 +185,7 @@ class LLMThread(models.Model):
         # Update generic thread names to include unique ID
         for record, needs_update in zip(records, needs_unique_name):
             if needs_update:
-                record.name = f"New Chat #{record.id}"
+                record.name = f"Chat {fields.Datetime.now().strftime('%m/%d/%Y, %I:%M:%S %p')}"
 
         return records
 
@@ -252,13 +252,10 @@ class LLMThread(models.Model):
         if author_id:
             return None  # Let standard flow handle it
 
-        provider_name = self.provider_id.name
-        model_name = self.model_id.name
-
         if subtype_xmlid == "llm.mt_tool" or llm_role == "tool":
-            return f"Tool <tool@{provider_name.lower().replace(' ', '')}.ai>"
+            return "Tool"
         elif subtype_xmlid == "llm.mt_assistant" or llm_role == "assistant":
-            return f"{model_name} <ai@{provider_name.lower().replace(' ', '')}.ai>"
+            return "AI Magenest"
 
         return None
 
@@ -267,6 +264,161 @@ class LLMThread(models.Model):
         if not body:
             return body
         return markdown2.markdown(emoji.demojize(body))
+
+    # ============================================================================
+    # AUTO-GENERATE TITLE
+    # ============================================================================
+
+    GENERATE_TITLE_SYSTEM_PROMPT = """### Task:
+Generate a concise, 3-5 word title summarizing the chat message.
+
+### Guidelines:
+- The title should clearly represent the main theme or subject of the conversation.
+- Do NOT include any emoji or special characters.
+- Write the title in the chat's primary language; default to English if multilingual.
+- Prioritize accuracy over excessive creativity; keep it clear and simple.
+- If the user input is a short phrase (e.g., a single word or code), use it exactly as the title.
+
+### Output:
+JSON format: {"title": "concise title"}
+
+### Examples:
+- {"title": "Stock Market Trends"}
+- {"title": "Perfect Chocolate Chip Recipe"}
+- {"title": "AI in Healthcare"}
+- {"title": "Rau Hữu Cơ"}
+- {"title": "Python Code Help"}
+
+### User Message:
+%s
+"""
+
+    def _should_generate_title(self):
+        """Check if this thread needs auto-generated title."""
+        self.ensure_one()
+        # Only generate for threads with default name pattern
+        if not self.name:
+            _logger.info(f"Thread {self.id}: Should generate title - no name")
+            return True
+        # Check for default naming patterns (Chat YYYY, Chat MM/DD, etc.)
+        import re
+        if re.match(r'^(Chat|New Chat)\s', self.name):
+            _logger.info(f"Thread {self.id}: Should generate title - default name pattern: {self.name}")
+            return True
+        _logger.info(f"Thread {self.id}: Skip title generation - custom name: {self.name}")
+        return False
+
+    def _get_first_user_message(self):
+        """Get the first user message content for title generation."""
+        self.ensure_one()
+        # Get messages ordered by date ascending
+        messages = self.message_ids.filtered(
+            lambda m: m.llm_role == "user" and m.body
+        ).sorted("date")
+        if messages:
+            # Strip HTML tags to get plain text
+            import re
+            body = messages[0].body or ""
+            plain_text = re.sub(r'<[^>]+>', '', body).strip()
+            # Limit to first 500 characters
+            return plain_text[:500] if plain_text else None
+        return None
+
+    def generate_title(self):
+        """Generate a title for this thread using AI based on the first user message."""
+        self.ensure_one()
+        _logger.info(f"Thread {self.id}: Starting title generation")
+
+        if not self._should_generate_title():
+            return False
+
+        user_message = self._get_first_user_message()
+        if not user_message:
+            _logger.warning(f"Thread {self.id}: No user message found for title generation")
+            return False
+
+        _logger.info(f"Thread {self.id}: User message for title: {user_message[:100]}...")
+
+        try:
+            # Use the thread's configured model or fall back to a default
+            model = self.model_id
+            if not model:
+                # Try to get a default model
+                model = self.env["llm.model"].search([
+                    ("active", "=", True)
+                ], limit=1)
+
+            if not model:
+                _logger.warning("No LLM model available for title generation")
+                return False
+
+            provider = model.provider_id
+            if not provider:
+                _logger.warning("No provider configured for model")
+                return False
+
+            _logger.info(f"Thread {self.id}: Using model {model.name} via provider {provider.name}")
+
+            # Build the prompt as user message
+            system_prompt = self.GENERATE_TITLE_SYSTEM_PROMPT % user_message
+
+            # Use provider.chat with prepend_messages for title generation
+            empty_messages = self.env["mail.message"].browse([])
+            prepend_messages = [
+                {"role": "user", "content": system_prompt}
+            ]
+
+            # Call chat method (non-streaming)
+            response = provider.chat(
+                messages=empty_messages,
+                model=model,
+                stream=False,
+                prepend_messages=prepend_messages
+            )
+            _logger.info(f"Thread {self.id}: Title generation response: {response}")
+
+            if response:
+                # Handle response - should be dict with 'content' key
+                response_text = response
+                if isinstance(response, dict):
+                    response_text = response.get("content", "") or response.get("text", "") or str(response)
+
+                _logger.info(f"Thread {self.id}: Response text: {response_text[:200] if response_text else 'empty'}")
+
+                # Try to parse JSON response
+                try:
+                    # Find JSON in response
+                    import re
+                    json_match = re.search(r'\{[^}]+\}', str(response_text))
+                    if json_match:
+                        data = json.loads(json_match.group())
+                        title = data.get("title", "").strip()
+                        if title:
+                            self.name = title
+                            _logger.info(f"Generated title for thread {self.id}: {self.name}")
+                            return True
+                    else:
+                        _logger.warning(f"Thread {self.id}: No JSON found in response")
+                except (json.JSONDecodeError, KeyError) as e:
+                    _logger.warning(f"Failed to parse title response: {e}")
+                    # Use response as-is if it's short enough
+                    response_str = str(response_text).strip()
+                    if len(response_str) < 50:
+                        self.name = response_str
+                        return True
+            else:
+                _logger.warning(f"Thread {self.id}: Empty response from model")
+
+        except Exception as e:
+            _logger.error(f"Error generating title for thread {self.id}: {e}", exc_info=True)
+
+        return False
+
+    def action_generate_title(self):
+        """Action to manually trigger title generation."""
+        for thread in self:
+            thread.generate_title()
+        return True
 
     # ============================================================================
     # STREAMING MESSAGE CREATION
@@ -344,6 +496,21 @@ class LLMThread(models.Model):
 
             # Call the actual generation implementation
             last_message = yield from self.generate_messages(last_message)
+
+            # Auto-generate title after first response if needed
+            if self._should_generate_title():
+                try:
+                    if self.generate_title():
+                        yield {
+                            "type": "thread_update",
+                            "thread": {
+                                "id": self.id,
+                                "name": self.name,
+                            },
+                        }
+                except Exception as e:
+                    _logger.warning(f"Failed to auto-generate title: {e}")
+
             return last_message
 
     def generate_messages(self, last_message=None):
