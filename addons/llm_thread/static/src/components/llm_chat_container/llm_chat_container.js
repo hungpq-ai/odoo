@@ -3,6 +3,7 @@
 import { _t } from "@web/core/l10n/translation";
 import { Component, useRef, useState } from "@odoo/owl";
 import { Composer } from "@mail/core/common/composer";
+import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { LLMThreadHeader } from "../llm_thread_header/llm_thread_header";
 import { Thread } from "@mail/core/common/thread";
 import { useService } from "@web/core/utils/hooks";
@@ -23,6 +24,7 @@ export class LLMChatContainer extends Component {
     this.llmStore = useState(useService("llm.store"));
     this.mailStore = useState(useService("mail.store"));
     this.action = useService("action");
+    this.dialog = useService("dialog");
     this.ui = useState(useService("ui")); // Wrap with useState to make it reactive
 
     // Reference to the scrollable thread container for proper jump-to-present behavior
@@ -36,6 +38,9 @@ export class LLMChatContainer extends Component {
       ),
       // Mobile: slide-in modal visibility
       isMobileSidebarVisible: false,
+      // Inline rename state
+      editingThreadId: null,
+      editingName: "",
     });
 
     // No need for local thread tracking - use mail.store.discuss.thread
@@ -130,19 +135,26 @@ export class LLMChatContainer extends Component {
 
   /**
    * Format date for display
-   * @param {String} dateString - Date string to format
+   * @param {String} dateString - Date string to format (UTC from server)
    * @returns {String} Formatted date string
    */
   formatDate(dateString) {
     if (!dateString) return "";
-    const date = new Date(dateString);
+    // Server returns UTC time without timezone suffix, append 'Z' to parse as UTC
+    const utcString = dateString.includes("Z") || dateString.includes("+")
+      ? dateString
+      : dateString.replace(" ", "T") + "Z";
+    const date = new Date(utcString);
     const now = new Date();
     const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffHours < 1) {
+    if (diffMins < 1) {
       return _t("Just now");
+    } else if (diffMins < 60) {
+      return _t("%sm ago", diffMins);
     } else if (diffHours < 24) {
       return _t("%sh ago", diffHours);
     } else if (diffDays < 7) {
@@ -160,6 +172,86 @@ export class LLMChatContainer extends Component {
       recordModel: this.props.recordModel,
       recordId: this.props.recordId,
     });
+  }
+
+  /**
+   * Delete thread with confirmation dialog
+   * @param {Event} ev - Click event
+   * @param {Number} threadId - Thread ID to delete
+   */
+  onDeleteThread(ev, threadId) {
+    ev.stopPropagation();
+    ev.preventDefault();
+    this.dialog.add(ConfirmationDialog, {
+      title: _t("Delete Conversation"),
+      body: _t("Are you sure you want to delete this conversation? This action cannot be undone."),
+      confirmLabel: _t("Delete"),
+      cancelLabel: _t("Cancel"),
+      confirm: async () => {
+        await this.llmStore.deleteThread(threadId);
+      },
+    });
+  }
+
+  /**
+   * Start inline rename mode
+   * @param {Event} ev - Click event
+   * @param {Number} threadId - Thread ID to rename
+   * @param {String} currentName - Current thread name
+   */
+  onRenameThread(ev, threadId, currentName) {
+    ev.stopPropagation();
+    ev.preventDefault();
+    this.state.editingThreadId = threadId;
+    this.state.editingName = currentName;
+    // Focus the input after render
+    setTimeout(() => {
+      const input = document.querySelector(".o-llm-rename-input");
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 50);
+  }
+
+  /**
+   * Handle rename input change
+   */
+  onRenameInputChange(ev) {
+    this.state.editingName = ev.target.value;
+  }
+
+  /**
+   * Save the renamed thread
+   */
+  async saveRename() {
+    const threadId = this.state.editingThreadId;
+    const newName = this.state.editingName.trim();
+    if (threadId && newName) {
+      await this.llmStore.renameThread(threadId, newName);
+    }
+    this.cancelRename();
+  }
+
+  /**
+   * Cancel rename mode
+   */
+  cancelRename() {
+    this.state.editingThreadId = null;
+    this.state.editingName = "";
+  }
+
+  /**
+   * Handle keydown in rename input
+   */
+  onRenameKeydown(ev) {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      this.saveRename();
+    } else if (ev.key === "Escape") {
+      ev.preventDefault();
+      this.cancelRename();
+    }
   }
 
   /**

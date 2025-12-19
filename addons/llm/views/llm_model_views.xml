@@ -42,6 +42,7 @@
                             <field name="publisher_id" />
                             <field name="model_use" />
                             <field name="default" />
+                            <field name="supports_streaming" />
                         </group>
                         <group>
                             <field name="details" widget="json_editor" />
@@ -66,6 +67,7 @@
                 <field name="provider_id" />
                 <field name="model_use" />
                 <field name="default" />
+                <field name="supports_streaming" />
                 <field name="active" invisible="1" />
             </list>
         </field>

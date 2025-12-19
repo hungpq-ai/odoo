@@ -53,7 +53,7 @@
             t-key="thread.id"
           >
                         <div
-              class="o-llm-thread-item p-3 border-bottom cursor-pointer"
+              class="o-llm-thread-item p-3 border-bottom cursor-pointer position-relative"
               t-att-class="{ 'o-llm-thread-active': thread.id === activeThread?.id }"
               t-on-click.stop.prevent="() => this.selectThread(thread.id)"
               t-att-title="thread.name"
@@ -62,22 +62,68 @@
                 class="d-flex justify-content-between align-items-start"
               >
                                 <div class="flex-grow-1 min-width-0">
-                                    <div
-                    class="text-truncate fw-medium"
-                    t-esc="thread.name"
-                  />
-                                    <div class="text-muted small mt-1">
-                                        <span
-                      t-if="thread.write_date"
-                      t-esc="formatDate(thread.write_date)"
+                                    <!-- Inline rename input -->
+                                    <t t-if="state.editingThreadId === thread.id">
+                                        <input
+                      type="text"
+                      class="form-control form-control-sm o-llm-rename-input"
+                      t-att-value="state.editingName"
+                      t-on-input="onRenameInputChange"
+                      t-on-keydown="onRenameKeydown"
+                      t-on-blur="saveRename"
+                      t-on-click.stop=""
                     />
-                                    </div>
+                                    </t>
+                                    <t t-else="">
+                                        <div
+                      class="text-truncate fw-medium"
+                      t-esc="thread.name"
+                    />
+                                        <div class="text-muted small mt-1">
+                                            <span
+                        t-if="thread.write_date"
+                        t-esc="formatDate(thread.write_date)"
+                      />
+                                        </div>
+                                    </t>
                                 </div>
-                                <div class="ms-2 flex-shrink-0">
+                                <div class="ms-2 flex-shrink-0 d-flex align-items-center gap-1" t-if="state.editingThreadId !== thread.id">
                                     <i
                     t-if="isStreamingThread(thread.id)"
                     class="fa fa-circle-o-notch fa-spin text-primary"
                   />
+                                    <!-- Thread menu dropdown -->
+                                    <div class="dropdown o-llm-thread-menu">
+                                        <button
+                      class="btn btn-sm btn-link text-muted p-0"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      t-on-click.stop=""
+                    >
+                                            <i class="fa fa-ellipsis-v" />
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a
+                          class="dropdown-item"
+                          href="#"
+                          t-on-click.stop.prevent="(ev) => this.onRenameThread(ev, thread.id, thread.name)"
+                        >
+                                                    <i class="fa fa-pencil me-2" />Rename
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider" /></li>
+                                            <li>
+                                                <a
+                          class="dropdown-item text-danger"
+                          href="#"
+                          t-on-click.stop.prevent="(ev) => this.onDeleteThread(ev, thread.id)"
+                        >
+                                                    <i class="fa fa-trash me-2" />Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -153,7 +199,7 @@
             t-key="thread.id"
           >
                         <div
-              class="o-llm-thread-item p-3 border-bottom cursor-pointer"
+              class="o-llm-thread-item p-3 border-bottom cursor-pointer position-relative"
               t-att-class="{ 'o-llm-thread-active': thread.id === activeThread?.id }"
               t-on-click.stop.prevent="() => this.selectThread(thread.id)"
               t-att-title="thread.name"
@@ -162,22 +208,68 @@
                 class="d-flex justify-content-between align-items-start"
               >
                                 <div class="flex-grow-1 min-width-0">
-                                    <div
-                    class="text-truncate fw-medium"
-                    t-esc="thread.name"
-                  />
-                                    <div class="text-muted small mt-1">
-                                        <span
-                      t-if="thread.write_date"
-                      t-esc="formatDate(thread.write_date)"
+                                    <!-- Inline rename input -->
+                                    <t t-if="state.editingThreadId === thread.id">
+                                        <input
+                      type="text"
+                      class="form-control form-control-sm o-llm-rename-input"
+                      t-att-value="state.editingName"
+                      t-on-input="onRenameInputChange"
+                      t-on-keydown="onRenameKeydown"
+                      t-on-blur="saveRename"
+                      t-on-click.stop=""
                     />
-                                    </div>
+                                    </t>
+                                    <t t-else="">
+                                        <div
+                      class="text-truncate fw-medium"
+                      t-esc="thread.name"
+                    />
+                                        <div class="text-muted small mt-1">
+                                            <span
+                        t-if="thread.write_date"
+                        t-esc="formatDate(thread.write_date)"
+                      />
+                                        </div>
+                                    </t>
                                 </div>
-                                <div class="ms-2 flex-shrink-0">
+                                <div class="ms-2 flex-shrink-0 d-flex align-items-center gap-1" t-if="state.editingThreadId !== thread.id">
                                     <i
                     t-if="isStreamingThread(thread.id)"
                     class="fa fa-circle-o-notch fa-spin text-primary"
                   />
+                                    <!-- Thread menu dropdown -->
+                                    <div class="dropdown o-llm-thread-menu">
+                                        <button
+                      class="btn btn-sm btn-link text-muted p-0"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      t-on-click.stop=""
+                    >
+                                            <i class="fa fa-ellipsis-v" />
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a
+                          class="dropdown-item"
+                          href="#"
+                          t-on-click.stop.prevent="(ev) => this.onRenameThread(ev, thread.id, thread.name)"
+                        >
+                                                    <i class="fa fa-pencil me-2" />Rename
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider" /></li>
+                                            <li>
+                                                <a
+                          class="dropdown-item text-danger"
+                          href="#"
+                          t-on-click.stop.prevent="(ev) => this.onDeleteThread(ev, thread.id)"
+                        >
+                                                    <i class="fa fa-trash me-2" />Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>

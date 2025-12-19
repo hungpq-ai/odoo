@@ -95,6 +95,75 @@
           color: rgba(255, 255, 255, 0.7) !important;
         }
       }
+
+      // Menu button - hidden by default, shown on hover
+      .o-llm-thread-menu {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+
+        .btn {
+          color: rgba(255, 255, 255, 0.5) !important;
+          padding: 0.25rem 0.5rem !important;
+
+          &:hover {
+            color: rgba(255, 255, 255, 0.9) !important;
+          }
+        }
+
+        .dropdown-menu {
+          background-color: #2d2d30;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          min-width: 140px;
+
+          .dropdown-item {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+
+            &:hover {
+              background-color: rgba(255, 255, 255, 0.1);
+            }
+
+            &.text-danger {
+              color: #ef4444 !important;
+
+              &:hover {
+                background-color: rgba(239, 68, 68, 0.1);
+              }
+            }
+
+            i {
+              width: 1rem;
+            }
+          }
+
+          .dropdown-divider {
+            border-color: rgba(255, 255, 255, 0.1);
+          }
+        }
+      }
+
+      &:hover .o-llm-thread-menu,
+      .o-llm-thread-menu.show {
+        opacity: 1;
+      }
+
+      // Inline rename input
+      .o-llm-rename-input {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+
+        &:focus {
+          background-color: rgba(255, 255, 255, 0.15);
+          border-color: #10a37f;
+          box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.25);
+          outline: none;
+        }
+      }
     }
 
     // Empty state styling in sidebar
@@ -498,10 +567,10 @@
 .o-llm-message-assistant,
 .o-llm-message-tool {
   .o-mail-Message-avatar {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
   }
 }
 

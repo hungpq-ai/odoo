@@ -23,6 +23,11 @@ class LLMModel(models.Model):
     )
     default = fields.Boolean(default=False)
     active = fields.Boolean(default=True)
+    supports_streaming = fields.Boolean(
+        string="Supports Streaming",
+        default=True,
+        help="Enable streaming responses. Disable to get accurate token counts from API.",
+    )
 
     # Model details
     details = fields.Json()

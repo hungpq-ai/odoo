@@ -4,6 +4,7 @@ import logging
 
 import emoji
 import markdown2
+from markupsafe import Markup
 from psycopg2 import OperationalError
 
 from odoo import _, api, fields, models
@@ -263,7 +264,8 @@ class LLMThread(models.Model):
         """Process body content for LLM messages (markdown to HTML conversion)."""
         if not body:
             return body
-        return markdown2.markdown(emoji.demojize(body))
+        html_content = markdown2.markdown(emoji.demojize(body))
+        return Markup(html_content)
 
     # ============================================================================
     # AUTO-GENERATE TITLE
@@ -273,21 +275,23 @@ class LLMThread(models.Model):
 Generate a concise, 3-5 word title summarizing the chat message.
 
 ### Guidelines:
+- IMPORTANT: The title MUST be in the SAME LANGUAGE as the user's message.
+  - If user writes in Chinese, title must be in Chinese.
+  - If user writes in Vietnamese, title must be in Vietnamese.
+  - If user writes in English, title must be in English.
 - The title should clearly represent the main theme or subject of the conversation.
 - Do NOT include any emoji or special characters.
-- Write the title in the chat's primary language; default to English if multilingual.
 - Prioritize accuracy over excessive creativity; keep it clear and simple.
 - If the user input is a short phrase (e.g., a single word or code), use it exactly as the title.
 
 ### Output:
-JSON format: {"title": "concise title"}
+JSON format: {"title": "concise title in user's language"}
 
 ### Examples:
-- {"title": "Stock Market Trends"}
-- {"title": "Perfect Chocolate Chip Recipe"}
-- {"title": "AI in Healthcare"}
-- {"title": "Rau Hữu Cơ"}
-- {"title": "Python Code Help"}
+- User: "What is AI?" -> {"title": "AI Definition"}
+- User: "Rau hữu cơ là gì?" -> {"title": "Rau Hữu Cơ"}
+- User: "100加1000等于多少" -> {"title": "数学计算"}
+- User: "Python code for sorting" -> {"title": "Python Sorting Code"}
 
 ### User Message:
 %s

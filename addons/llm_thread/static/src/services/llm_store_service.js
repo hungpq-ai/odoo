@@ -409,6 +409,64 @@ export const llmStoreService = {
         }
       },
 
+      // Rename a thread
+      async renameThread(threadId, newName) {
+        try {
+          // Update database
+          await orm.write("llm.thread", [threadId], { name: newName });
+
+          // Update local thread list
+          const thread = this.llmThreadList.find((t) => t.id === threadId);
+          if (thread) {
+            thread.name = newName;
+          }
+
+          // Update mail store if this is the active thread
+          const mailThread = mailStore.Thread.get({
+            model: "llm.thread",
+            id: threadId,
+          });
+          if (mailThread) {
+            mailThread.name = newName;
+          }
+
+          notification.add(_t("Conversation renamed successfully."), {
+            type: "success",
+          });
+          return true;
+        } catch (error) {
+          console.error("Error renaming thread:", error);
+          notification.add(
+            _t("Could not rename the conversation. Please try again."),
+            { type: "danger" }
+          );
+          return false;
+        }
+      },
+
+      // Delete a thread
+      async deleteThread(threadId) {
+        try {
+          // Delete from database
+          await orm.unlink("llm.thread", [threadId]);
+
+          notification.add(_t("Conversation deleted successfully."), {
+            type: "success",
+          });
+
+          // Reload page to refresh thread list
+          window.location.reload();
+          return true;
+        } catch (error) {
+          console.error("Error deleting thread:", error);
+          notification.add(
+            _t("Could not delete the conversation. Please try again."),
+            { type: "danger" }
+          );
+          return false;
+        }
+      },
+
       // Unlink record from a thread
       async unlinkRecordFromThread(threadId) {
         try {
