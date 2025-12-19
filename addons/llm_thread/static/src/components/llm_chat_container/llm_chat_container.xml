@@ -24,7 +24,7 @@
                 <div
           class="o-llm-sidebar-header d-flex align-items-center justify-content-between border-bottom p-3"
         >
-                    <h6 class="mb-0 text-white">Conversations</h6>
+                    <h5 class="mb-0 text-white">Conversations</h5>
                     <button
             class="btn btn-sm btn-primary"
             t-on-click="createNewThread"
@@ -145,7 +145,7 @@
                     <!-- Expanded state: Header content + collapse button on right -->
                     <t t-if="!state.isSidebarCollapsed">
                         <div class="d-flex align-items-center gap-2">
-                            <h6 class="mb-0 text-white">Conversations</h6>
+                            <h5 class="mb-0 text-white">Conversations</h5>
                             <button
                 class="btn btn-sm btn-primary"
                 t-on-click="createNewThread"

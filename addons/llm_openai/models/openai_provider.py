@@ -396,7 +396,7 @@ class LLMProvider(models.Model):
             list: Cleaned list of messages
         """
         # Hardcoded value for verbose logging
-        verbose_logging = False
+        verbose_logging = True
 
         validator = OpenAIMessageValidator(
             messages, logger=_logger, verbose_logging=verbose_logging

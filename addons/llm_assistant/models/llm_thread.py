@@ -312,11 +312,13 @@ class LLMThread(models.Model):
 
     def _prepare_chat_kwargs(self, message_history, use_streaming):
         """Prepare chat kwargs for provider. Can be overridden by extensions."""
+        prepend_msgs = self.get_prepend_messages()
+
         return {
             "messages": message_history,
             "tools": self.tool_ids,
             "stream": use_streaming,
-            "prepend_messages": self.get_prepend_messages(),
+            "prepend_messages": prepend_msgs,
         }
 
     def get_llm_messages(self, limit=25):

@@ -1,10 +1,34 @@
+import base64
 import logging
+import mimetypes
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.osv import expression
 
 _logger = logging.getLogger(__name__)
+
+# Supported image MIME types for vision models
+IMAGE_MIME_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+}
+
+# Supported document types that can be converted to text
+DOCUMENT_MIME_TYPES = {
+    "application/pdf",
+    "text/plain",
+    "text/markdown",
+    "text/csv",
+    "application/json",
+    # Microsoft Office formats
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  # .docx
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # .xlsx
+    "application/msword",  # .doc
+    "application/vnd.ms-excel",  # .xls
+}
 
 
 class MailMessage(models.Model):
@@ -81,3 +105,283 @@ class MailMessage(models.Model):
                 )
             )
         self.sudo().write({"user_vote": vote_value})
+
+    def _get_attachment_content_blocks(self, provider="openai"):
+        """Get attachment content blocks for LLM message formatting.
+
+        This method processes message attachments and converts them to
+        content blocks suitable for multimodal LLM APIs.
+
+        Args:
+            provider (str): The provider type ('openai' or 'anthropic')
+
+        Returns:
+            list: List of content blocks for attachments
+                  - Images: base64 encoded with media type
+                  - Text files: extracted text content
+                  - PDFs: text extraction attempted, or OCR if available
+        """
+        self.ensure_one()
+        content_blocks = []
+
+        if not self.attachment_ids:
+            return content_blocks
+
+        for attachment in self.attachment_ids:
+            mimetype = attachment.mimetype or mimetypes.guess_type(attachment.name)[0]
+            if not mimetype:
+                continue
+
+            # Handle image attachments
+            if mimetype in IMAGE_MIME_TYPES:
+                block = self._format_image_attachment(attachment, mimetype, provider)
+                if block:
+                    content_blocks.append(block)
+
+            # Handle text-based documents
+            elif mimetype in DOCUMENT_MIME_TYPES or mimetype.startswith("text/"):
+                block = self._format_document_attachment(attachment, mimetype, provider)
+                if block:
+                    content_blocks.append(block)
+
+        return content_blocks
+
+    def _format_image_attachment(self, attachment, mimetype, provider):
+        """Format an image attachment for LLM API.
+
+        Args:
+            attachment: ir.attachment record
+            mimetype: MIME type of the image
+            provider: 'openai' or 'anthropic'
+
+        Returns:
+            dict: Content block for the image
+        """
+        try:
+            # Get base64 encoded image data
+            image_data = attachment.datas
+            if not image_data:
+                return None
+
+            # Decode if bytes, keep if already string
+            if isinstance(image_data, bytes):
+                image_base64 = image_data.decode("utf-8")
+            else:
+                image_base64 = image_data
+
+            if provider == "anthropic":
+                return {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": mimetype,
+                        "data": image_base64,
+                    },
+                }
+            else:  # openai format
+                return {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{mimetype};base64,{image_base64}",
+                    },
+                }
+        except Exception as e:
+            _logger.warning(f"Failed to process image attachment {attachment.name}: {e}")
+            return None
+
+    def _format_document_attachment(self, attachment, mimetype, provider):
+        """Format a document attachment for LLM API.
+
+        For text files, extracts content directly.
+        For PDFs, attempts text extraction or uses OCR if available.
+        For DOCX/XLSX, uses python-docx/openpyxl if available.
+
+        Args:
+            attachment: ir.attachment record
+            mimetype: MIME type of the document
+            provider: 'openai' or 'anthropic'
+
+        Returns:
+            dict: Content block with extracted text
+        """
+        try:
+            text_content = None
+
+            # Handle plain text files
+            if mimetype.startswith("text/") or mimetype in ("application/json",):
+                if attachment.datas:
+                    raw_data = base64.b64decode(attachment.datas)
+                    text_content = raw_data.decode("utf-8", errors="replace")
+
+            # Handle PDF files
+            elif mimetype == "application/pdf":
+                text_content = self._extract_pdf_text(attachment)
+
+            # Handle DOCX files
+            elif mimetype == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                text_content = self._extract_docx_text(attachment)
+
+            # Handle XLSX files
+            elif mimetype == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                text_content = self._extract_xlsx_text(attachment)
+
+            if text_content:
+                formatted_text = f"[Attachment: {attachment.name}]\n{text_content}"
+                return {"type": "text", "text": formatted_text}
+
+            return None
+        except Exception as e:
+            _logger.warning(f"Failed to process document attachment {attachment.name}: {e}")
+            return None
+
+    def _extract_pdf_text(self, attachment):
+        """Extract text from PDF attachment.
+
+        Tries multiple methods:
+        1. PyMuPDF (fitz) if available
+        2. pdfplumber if available
+        3. Returns placeholder if no library available
+
+        Args:
+            attachment: ir.attachment record
+
+        Returns:
+            str: Extracted text or None
+        """
+        if not attachment.datas:
+            return None
+
+        pdf_data = base64.b64decode(attachment.datas)
+
+        # Try PyMuPDF first (most reliable)
+        try:
+            import fitz  # PyMuPDF
+
+            doc = fitz.open(stream=pdf_data, filetype="pdf")
+            text_parts = []
+            for page in doc:
+                text_parts.append(page.get_text())
+            doc.close()
+            return "\n".join(text_parts)
+        except ImportError:
+            pass
+        except Exception as e:
+            _logger.debug(f"PyMuPDF extraction failed: {e}")
+
+        # Try pdfplumber
+        try:
+            import io
+
+            import pdfplumber
+
+            with pdfplumber.open(io.BytesIO(pdf_data)) as pdf:
+                text_parts = []
+                for page in pdf.pages:
+                    text = page.extract_text()
+                    if text:
+                        text_parts.append(text)
+                return "\n".join(text_parts)
+        except ImportError:
+            pass
+        except Exception as e:
+            _logger.debug(f"pdfplumber extraction failed: {e}")
+
+        # No PDF library available
+        _logger.warning(
+            f"No PDF extraction library available for {attachment.name}. "
+            "Install PyMuPDF (pip install pymupdf) or pdfplumber for PDF support."
+        )
+        return f"[PDF file: {attachment.name} - text extraction not available]"
+
+    def _extract_docx_text(self, attachment):
+        """Extract text from DOCX attachment.
+
+        Uses python-docx library if available.
+
+        Args:
+            attachment: ir.attachment record
+
+        Returns:
+            str: Extracted text or placeholder
+        """
+        if not attachment.datas:
+            return None
+
+        docx_data = base64.b64decode(attachment.datas)
+
+        try:
+            import io
+
+            from docx import Document
+
+            doc = Document(io.BytesIO(docx_data))
+            text_parts = []
+            for paragraph in doc.paragraphs:
+                if paragraph.text.strip():
+                    text_parts.append(paragraph.text)
+
+            # Also extract text from tables
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = []
+                    for cell in row.cells:
+                        if cell.text.strip():
+                            row_text.append(cell.text.strip())
+                    if row_text:
+                        text_parts.append(" | ".join(row_text))
+
+            return "\n".join(text_parts)
+        except ImportError:
+            _logger.warning(
+                f"python-docx not installed for {attachment.name}. "
+                "Install with: pip install python-docx"
+            )
+            return f"[DOCX file: {attachment.name} - python-docx library not available]"
+        except Exception as e:
+            _logger.warning(f"DOCX extraction failed for {attachment.name}: {e}")
+            return f"[DOCX file: {attachment.name} - extraction failed]"
+
+    def _extract_xlsx_text(self, attachment):
+        """Extract text from XLSX attachment.
+
+        Uses openpyxl library if available.
+
+        Args:
+            attachment: ir.attachment record
+
+        Returns:
+            str: Extracted text or placeholder
+        """
+        if not attachment.datas:
+            return None
+
+        xlsx_data = base64.b64decode(attachment.datas)
+
+        try:
+            import io
+
+            from openpyxl import load_workbook
+
+            wb = load_workbook(io.BytesIO(xlsx_data), read_only=True, data_only=True)
+            text_parts = []
+
+            for sheet_name in wb.sheetnames:
+                sheet = wb[sheet_name]
+                text_parts.append(f"=== Sheet: {sheet_name} ===")
+
+                for row in sheet.iter_rows(values_only=True):
+                    row_values = [str(cell) if cell is not None else "" for cell in row]
+                    if any(v.strip() for v in row_values):
+                        text_parts.append(" | ".join(row_values))
+
+            wb.close()
+            return "\n".join(text_parts)
+        except ImportError:
+            _logger.warning(
+                f"openpyxl not installed for {attachment.name}. "
+                "Install with: pip install openpyxl"
+            )
+            return f"[XLSX file: {attachment.name} - openpyxl library not available]"
+        except Exception as e:
+            _logger.warning(f"XLSX extraction failed for {attachment.name}: {e}")
+            return f"[XLSX file: {attachment.name} - extraction failed]"

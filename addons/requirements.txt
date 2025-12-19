@@ -1,5 +1,7 @@
 # generated from manifests external_dependencies
+a2a-sdk
 cryptography>=41.0.0
+httpx
 PyMuPDF
 anthropic
 chromadb-client
@@ -22,6 +24,7 @@ pgvector
 pydantic>=2.0.0
 pyyaml
 python-docx
+openpyxl
 qdrant-client
 replicate
 requests

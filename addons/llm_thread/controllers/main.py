@@ -9,6 +9,23 @@ from odoo.modules.registry import Registry
 _logger = logging.getLogger(__name__)
 
 
+def _parse_attachment_ids(attachment_ids_str):
+    """Parse attachment_ids from URL parameter.
+
+    Args:
+        attachment_ids_str: JSON string of attachment IDs or None
+
+    Returns:
+        list: List of attachment IDs
+    """
+    if not attachment_ids_str:
+        return []
+    try:
+        return json.loads(attachment_ids_str)
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
 class LLMThreadController(http.Controller):
     @http.route(
         "/llm/thread/<int:thread_id>/update",
@@ -39,7 +56,7 @@ class LLMThreadController(http.Controller):
             return False
 
     @classmethod
-    def _llm_thread_generate(cls, dbname, env, thread_id, user_message_body, **kwargs):
+    def _llm_thread_generate(cls, dbname, env, thread_id, user_message_body, attachment_ids=None, **kwargs):
         """Generate LLM responses with streaming and safe yielding."""
         with Registry(dbname).cursor() as cr:
             env = api.Environment(cr, env.uid, env.context)
@@ -52,7 +69,7 @@ class LLMThreadController(http.Controller):
 
             client_connected = True
             try:
-                for response in llm_thread.generate(user_message_body, **kwargs):
+                for response in llm_thread.generate(user_message_body, attachment_ids=attachment_ids, **kwargs):
                     json_data = json.dumps(response, default=str)
                     success = yield from cls._safe_yield(
                         f"data: {json_data}\n\n".encode()
@@ -84,16 +101,18 @@ class LLMThreadController(http.Controller):
                     )
 
     @http.route("/llm/thread/generate", type="http", auth="user", csrf=True)
-    def llm_thread_generate(self, thread_id, message=None, **kwargs):
+    def llm_thread_generate(self, thread_id, message=None, attachment_ids=None, **kwargs):
         headers = {
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",  # Disable nginx buffering
         }
         user_message_body = message
+        parsed_attachment_ids = _parse_attachment_ids(attachment_ids)
         return Response(
             self._llm_thread_generate(
-                request.cr.dbname, request.env, thread_id, user_message_body, **kwargs
+                request.cr.dbname, request.env, thread_id, user_message_body,
+                attachment_ids=parsed_attachment_ids, **kwargs
             ),
             direct_passthrough=True,
             headers=headers,

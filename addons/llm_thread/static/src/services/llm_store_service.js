@@ -70,12 +70,13 @@ export const llmStoreService = {
         return null;
       },
 
-      async sendLLMMessage(threadId, content) {
-        if (!threadId || !content?.trim()) return;
+      async sendLLMMessage(threadId, content, attachmentIds = []) {
+        // Allow sending if there's content OR attachments
+        if (!threadId || (!content?.trim() && attachmentIds.length === 0)) return;
 
         try {
           // Start LLM streaming - backend will handle both user message creation and AI response
-          await this.startLLMStreaming(threadId, content);
+          await this.startLLMStreaming(threadId, content, attachmentIds);
         } catch (error) {
           console.error("Error sending LLM message:", error);
           notification.add(
@@ -87,20 +88,21 @@ export const llmStoreService = {
         }
       },
 
-      async startLLMStreaming(threadId, message) {
+      async startLLMStreaming(threadId, message, attachmentIds = []) {
         // Stop any existing stream for this thread
         this.stopStreaming(threadId);
 
         this.streamingThreads.add(threadId);
 
         try {
-          // Include message parameter only if provided (for user message creation)
-          // If message is null/empty, backend will use latest message in thread
-          const url = message
-            ? `/llm/thread/generate?thread_id=${threadId}&message=${encodeURIComponent(
-                message
-              )}`
-            : `/llm/thread/generate?thread_id=${threadId}`;
+          // Build URL with message and attachment_ids parameters
+          let url = `/llm/thread/generate?thread_id=${threadId}`;
+          if (message) {
+            url += `&message=${encodeURIComponent(message)}`;
+          }
+          if (attachmentIds.length > 0) {
+            url += `&attachment_ids=${encodeURIComponent(JSON.stringify(attachmentIds))}`;
+          }
           const eventSource = new EventSource(url);
 
           this.eventSources.set(threadId, eventSource);
@@ -454,8 +456,9 @@ export const llmStoreService = {
             type: "success",
           });
 
-          // Reload page to refresh thread list
-          window.location.reload();
+          // Redirect to chat without thread_id (avoids "could not be found" message)
+          const baseUrl = window.location.pathname.split("?")[0];
+          window.location.href = baseUrl;
           return true;
         } catch (error) {
           console.error("Error deleting thread:", error);

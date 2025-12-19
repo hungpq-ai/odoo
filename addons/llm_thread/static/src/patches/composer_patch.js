@@ -50,15 +50,20 @@ patch(Composer.prototype, {
     // For LLM threads, use our custom logic
     if (this.isLLMThread && this.llmStore) {
       const content = this.props.composer.text?.trim();
-      if (!content) return;
+
+      // Get attachment IDs from composer
+      const attachmentIds = this.props.composer.attachments?.map(a => a.id) || [];
+
+      // Allow sending if there's content OR attachments
+      if (!content && attachmentIds.length === 0) return;
 
       const threadId = this.props.composer.thread.id;
 
       // Clear composer immediately for better UX
       this.props.composer.clear();
 
-      // Send through LLM store
-      await this.llmStore.sendLLMMessage(threadId, content);
+      // Send through LLM store with attachments
+      await this.llmStore.sendLLMMessage(threadId, content || "", attachmentIds);
       return;
     }
 

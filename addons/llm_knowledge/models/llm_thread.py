@@ -1,9 +1,6 @@
-import logging
 import re
 
 from odoo import api, fields, models
-
-_logger = logging.getLogger(__name__)
 
 
 class LLMThread(models.Model):
@@ -140,22 +137,32 @@ class LLMThread(models.Model):
         """Override to include RAG context in the system prompt.
 
         This method:
-        1. Gets the user's latest message (query)
-        2. Searches for relevant documents using semantic search
-        3. Adds the retrieved context to the prompt
-        4. Returns messages with RAG context
+        1. Gets base messages from parent classes (to support multi-module composition)
+        2. Gets the user's latest message (query)
+        3. Searches for relevant documents using semantic search
+        4. Adds the retrieved context as additional system message
+        5. Returns combined messages (base + RAG context)
+
+        Note: RAG context is ALWAYS appended as a separate system message,
+        regardless of whether prompt_id is set. This ensures RAG works with
+        any prompt configuration.
         """
         self.ensure_one()
 
-        # If RAG not enabled or no collections, use default behavior
+        # IMPORTANT: Always get base messages first to support module composition
+        # This allows other modules (like llm_a2a) to also add their messages
+        # Base messages include: prompt_id messages (from llm_assistant)
+        base_messages = super().get_prepend_messages()
+
+        # If RAG not enabled or no collections, return base messages as-is
         if not self.rag_enabled or not self.collection_ids:
-            return super().get_prepend_messages()
+            return base_messages
 
         # Get the latest user message to use as search query
         latest_user_message = self._get_latest_user_query()
 
         if not latest_user_message:
-            return super().get_prepend_messages()
+            return base_messages
 
         # Search for relevant documents
         chunks = self._search_relevant_documents(latest_user_message)
@@ -169,26 +176,8 @@ class LLMThread(models.Model):
         # Get glossary context from collections
         glossary_context = self.env["llm.glossary"].get_glossary_context(self.collection_ids)
 
-        # Build context for prompt rendering
-        prompt_context = self.get_context()
-        prompt_context["rag_context"] = rag_context
-        prompt_context["glossary_context"] = glossary_context
-        prompt_context["user_query"] = latest_user_message
-        prompt_context["has_context"] = bool(rag_context)
-        prompt_context["doc_downloads"] = doc_downloads
-
-        # If we have a prompt_id, use it with RAG context
-        if hasattr(self, "prompt_id") and self.prompt_id:
-            try:
-                return self.prompt_id.get_messages(prompt_context)
-            except Exception as e:
-                _logger.error(
-                    "Error getting messages from RAG prompt '%s': %s",
-                    self.prompt_id.name,
-                    str(e),
-                )
-
-        # Fallback: return basic system message with RAG context
+        # Build RAG system message to append to base messages
+        # This is ALWAYS appended, even when prompt_id is set
         if rag_context or glossary_context:
             # Build download links section
             download_section = ""
@@ -196,7 +185,7 @@ class LLMThread(models.Model):
                 download_links = "\n".join(
                     f"- [{doc['name']}]({doc['url']})" for doc in doc_downloads
                 )
-                download_section = f"\n\n## Tài liệu tham khảo (có thể tải về):\n{download_links}"
+                download_section = f"\n\n## Reference Documents (downloadable):\n{download_links}"
 
             # Build glossary section
             glossary_section = ""
@@ -206,27 +195,26 @@ class LLMThread(models.Model):
             # Build documents section
             documents_section = ""
             if rag_context:
-                documents_section = f"## Relevant Documents:\n\n{rag_context}"
+                documents_section = f"## Retrieved Knowledge:\n\n{rag_context}"
 
-            return [
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a helpful assistant that answers questions based on "
-                        "the provided document context.\n\n"
-                        f"{documents_section}"
-                        f"{glossary_section}"
-                        f"{download_section}\n\n"
-                        "## Instructions:\n"
-                        "- Answer based on the provided documents\n"
-                        "- If the answer is not in the documents, say so\n"
-                        "- Use the glossary to understand internal terms correctly\n"
-                        "- Reference links are already provided above, do not repeat them in your answer"
-                    ),
-                }
-            ]
+            rag_system_message = {
+                "role": "system",
+                "content": (
+                    "# Knowledge Base Context\n\n"
+                    f"{documents_section}"
+                    f"{glossary_section}"
+                    f"{download_section}\n\n"
+                    "## RAG Instructions:\n"
+                    "- Use the retrieved knowledge above to answer questions\n"
+                    "- If the answer is not in the documents, say so\n"
+                    "- Use the glossary to understand internal terms correctly"
+                ),
+            }
 
-        return super().get_prepend_messages()
+            # EXTEND base messages instead of replacing them
+            return list(base_messages) + [rag_system_message]
+
+        return base_messages
 
     def _get_latest_user_query(self):
         """Get the latest user message content for RAG search.

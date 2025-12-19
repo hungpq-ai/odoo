@@ -474,25 +474,32 @@ JSON format: {"title": "concise title in user's language"}
     # GENERATION FLOW - Refactored to use message_post with roles
     # ============================================================================
 
-    def generate(self, user_message_body=None, **kwargs):
+    def generate(self, user_message_body=None, attachment_ids=None, **kwargs):
         """Main generation method with PostgreSQL advisory locking.
 
         Args:
             user_message_body: Optional message body. If not provided, will use
                               the latest message in the thread to start generation.
+            attachment_ids: Optional list of attachment IDs to attach to the user message.
         """
         self.ensure_one()
 
         with self._generation_lock():
             last_message = False
-            # Post user message if provided
-            if user_message_body:
-                last_message = self.message_post(
-                    body=user_message_body,
-                    llm_role="user",
-                    author_id=self.env.user.partner_id.id,
-                    **kwargs,
-                )
+            # Post user message if provided (with or without attachments)
+            if user_message_body or attachment_ids:
+                # Prepare message_post kwargs
+                post_kwargs = {
+                    "body": user_message_body or "",
+                    "llm_role": "user",
+                    "author_id": self.env.user.partner_id.id,
+                }
+
+                # Add attachments if provided (message_post expects list of IDs)
+                if attachment_ids:
+                    post_kwargs["attachment_ids"] = attachment_ids
+
+                last_message = self.message_post(**post_kwargs, **kwargs)
                 yield {
                     "type": "message_create",
                     "message": last_message.to_store_format(),

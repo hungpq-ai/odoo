@@ -24,10 +24,22 @@ class MailMessage(models.Model):
 
         if self.is_llm_user_message()[self]:
             formatted_message = {"role": "user"}
-            if body:
+
+            # Get attachment content blocks
+            attachment_blocks = self._get_attachment_content_blocks(provider="anthropic")
+
+            if attachment_blocks:
+                # Use multimodal content format with text + attachments
+                content_blocks = []
+                if body:
+                    content_blocks.append({"type": "text", "text": body})
+                content_blocks.extend(attachment_blocks)
+                formatted_message["content"] = content_blocks
+            elif body:
                 formatted_message["content"] = body
             else:
                 formatted_message["content"] = ""
+
             return formatted_message
 
         elif self.is_llm_assistant_message()[self]:
