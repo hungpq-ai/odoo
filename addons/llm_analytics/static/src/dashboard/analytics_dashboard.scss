@@ -1,0 +1,44 @@
+.o_llm_analytics_dashboard {
+    background-color: #f8f9fa;
+    min-height: 100%;
+
+    .o_dashboard_header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+        }
+    }
+
+    .bg-opacity-10 {
+        --bs-bg-opacity: 0.1;
+    }
+
+    .rounded-circle.p-3 {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .progress {
+        border-radius: 50px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        transition: width 0.6s ease;
+    }
+
+    .border-4 {
+        border-width: 4px !important;
+    }
+}

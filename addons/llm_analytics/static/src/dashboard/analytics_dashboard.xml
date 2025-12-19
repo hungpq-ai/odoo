@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="llm_analytics.Dashboard">
+        <div class="o_llm_analytics_dashboard">
+            <!-- Header -->
+            <div class="o_dashboard_header d-flex justify-content-between align-items-center mb-4 p-3 bg-white border-bottom">
+                <h2 class="mb-0">
+                    <i class="fa fa-bar-chart me-2 text-primary"/>
+                    AI Analytics Dashboard
+                </h2>
+                <div class="btn-group" role="group">
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'today' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('today')">
+                        Today
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'week' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('week')">
+                        This Week
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'month' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('month')">
+                        This Month
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'all' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('all')">
+                        All Time
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div t-if="state.loading" class="text-center p-5">
+                <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
+                <p class="mt-3 text-muted">Loading analytics...</p>
+            </div>
+
+            <!-- Content -->
+            <div t-else="" class="o_dashboard_content p-3">
+                <!-- KPI Cards Row 1 -->
+                <div class="row g-3 mb-4">
+                    <!-- Total Requests -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                            <i class="fa fa-comments fa-2x text-primary"/>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-1">Total Requests</h6>
+                                        <h3 class="mb-0" t-esc="formatNumber(state.stats.total_requests)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-0 pt-0">
+                                <a href="#" class="text-primary small" t-on-click.prevent="() => this.openRequests([])">
+                                    View all requests <i class="fa fa-arrow-right ms-1"/>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Tokens -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                            <i class="fa fa-database fa-2x text-success"/>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-1">Total Tokens</h6>
+                                        <h3 class="mb-0" t-esc="formatNumber(state.stats.total_tokens)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-0 pt-0">
+                                <small class="text-muted">
+                                    <span t-esc="formatNumber(state.stats.tokens_input)"/> input /
+                                    <span t-esc="formatNumber(state.stats.tokens_output)"/> output
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Cost -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                                            <i class="fa fa-usd fa-2x text-warning"/>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-1">Total Cost</h6>
+                                        <h3 class="mb-0" t-esc="formatCost(state.stats.total_cost)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-0 pt-0">
+                                <small class="text-muted">
+                                    Avg: <span t-esc="formatCost(state.stats.avg_cost)"/> per request
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Avg Response Time -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-info bg-opacity-10 rounded-circle p-3">
+                                            <i class="fa fa-clock-o fa-2x text-info"/>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-1">Avg Response Time</h6>
+                                        <h3 class="mb-0" t-esc="formatTime(state.stats.avg_response_time)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-0 pt-0">
+                                <small class="text-muted">
+                                    Success rate: <span class="text-success" t-esc="formatPercent(state.stats.success_rate)"/>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Cards Row 2 - Feedback -->
+                <div class="row g-3 mb-4">
+                    <!-- Likes -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm border-start border-success border-4">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fa fa-thumbs-up fa-2x text-success"/>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-1">Likes</h6>
+                                        <h3 class="mb-0 text-success" t-esc="formatNumber(state.stats.total_likes)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-0 pt-0">
+                                <a href="#" class="text-success small" t-on-click.prevent="openLiked">
+                                    View liked <i class="fa fa-arrow-right ms-1"/>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dislikes -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm border-start border-danger border-4">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="fa fa-thumbs-down fa-2x text-danger"/>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="text-muted mb-1">Dislikes</h6>
+                                        <h3 class="mb-0 text-danger" t-esc="formatNumber(state.stats.total_dislikes)"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-0 pt-0">
+                                <a href="#" class="text-danger small" t-on-click.prevent="openDisliked">
+                                    View disliked <i class="fa fa-arrow-right ms-1"/>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Satisfaction Rate -->
+                    <div class="col-lg-6 col-md-12">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="text-muted mb-3">Satisfaction Rate</h6>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-success"
+                                         role="progressbar"
+                                         t-attf-style="width: #{state.stats.satisfaction_rate}%">
+                                        <span t-esc="formatPercent(state.stats.satisfaction_rate)"/> satisfied
+                                    </div>
+                                    <div class="progress-bar bg-danger"
+                                         role="progressbar"
+                                         t-attf-style="width: #{100 - state.stats.satisfaction_rate}%">
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-2 d-block">
+                                    Based on <span t-esc="state.stats.total_likes + state.stats.total_dislikes"/> feedbacks
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row g-3">
+                    <!-- Top Models -->
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-transparent">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-pie-chart me-2 text-primary"/>
+                                    Requests by Model
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <t t-if="state.chartData.byModel.length">
+                                    <t t-foreach="state.chartData.byModel" t-as="item" t-key="item.model">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <span t-esc="item.model"/>
+                                                    <span class="text-muted" t-esc="formatNumber(item.count)"/>
+                                                </div>
+                                                <div class="progress" style="height: 8px;">
+                                                    <div class="progress-bar bg-primary"
+                                                         t-attf-style="width: #{item.percent}%"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted text-center mb-0">No data available</p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Users -->
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-transparent">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-users me-2 text-success"/>
+                                    Top Users
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <t t-if="state.chartData.byUser.length">
+                                    <t t-foreach="state.chartData.byUser" t-as="item" t-key="item.user">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fa fa-user text-muted"/>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <div class="d-flex justify-content-between">
+                                                    <span t-esc="item.user"/>
+                                                    <span class="badge bg-primary" t-esc="formatNumber(item.count)"/>
+                                                </div>
+                                                <small class="text-muted">
+                                                    <span t-esc="formatNumber(item.tokens)"/> tokens
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted text-center mb-0">No data available</p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

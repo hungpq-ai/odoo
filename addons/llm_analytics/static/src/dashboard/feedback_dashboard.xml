@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="llm_analytics.FeedbackDashboard">
+        <div class="o_llm_analytics_dashboard">
+            <!-- Header -->
+            <div class="o_dashboard_header d-flex justify-content-between align-items-center mb-4 p-3 bg-white border-bottom">
+                <h2 class="mb-0">
+                    <i class="fa fa-star me-2 text-warning"/>
+                    Feedback Report
+                </h2>
+                <div class="btn-group" role="group">
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'today' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('today')">
+                        Today
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'week' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('week')">
+                        This Week
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'month' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('month')">
+                        This Month
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'all' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('all')">
+                        All Time
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div t-if="state.loading" class="text-center p-5">
+                <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
+                <p class="mt-3 text-muted">Loading feedback data...</p>
+            </div>
+
+            <!-- Content -->
+            <div t-else="" class="o_dashboard_content p-3">
+                <!-- Summary Cards -->
+                <div class="row g-3 mb-4">
+                    <!-- Total Feedback -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fa fa-comments fa-2x text-primary mb-2"/>
+                                <h6 class="text-muted">Total Feedback</h6>
+                                <h2 class="mb-0" t-esc="formatNumber(state.stats.total_feedback)"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Likes -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm border-start border-success border-4 cursor-pointer"
+                             t-on-click="() => this.openFeedback('like')">
+                            <div class="card-body text-center">
+                                <i class="fa fa-thumbs-up fa-2x text-success mb-2"/>
+                                <h6 class="text-muted">Likes</h6>
+                                <h2 class="mb-0 text-success" t-esc="formatNumber(state.stats.total_likes)"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dislikes -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm border-start border-danger border-4 cursor-pointer"
+                             t-on-click="() => this.openFeedback('dislike')">
+                            <div class="card-body text-center">
+                                <i class="fa fa-thumbs-down fa-2x text-danger mb-2"/>
+                                <h6 class="text-muted">Dislikes</h6>
+                                <h2 class="mb-0 text-danger" t-esc="formatNumber(state.stats.total_dislikes)"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Satisfaction Rate -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fa fa-smile-o fa-2x text-warning mb-2"/>
+                                <h6 class="text-muted">Satisfaction Rate</h6>
+                                <h2 class="mb-0" t-attf-class="#{state.stats.satisfaction_rate >= 70 ? 'text-success' : state.stats.satisfaction_rate >= 50 ? 'text-warning' : 'text-danger'}">
+                                    <t t-esc="formatPercent(state.stats.satisfaction_rate)"/>
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Satisfaction Gauge -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="text-muted mb-3">Overall Satisfaction</h6>
+                                <div class="progress" style="height: 30px;">
+                                    <div class="progress-bar bg-success"
+                                         role="progressbar"
+                                         t-attf-style="width: #{state.stats.satisfaction_rate}%">
+                                        <span class="fw-bold" t-if="state.stats.satisfaction_rate > 10">
+                                            <i class="fa fa-thumbs-up me-1"/>
+                                            <t t-esc="formatNumber(state.stats.total_likes)"/> likes
+                                        </span>
+                                    </div>
+                                    <div class="progress-bar bg-danger"
+                                         role="progressbar"
+                                         t-attf-style="width: #{100 - state.stats.satisfaction_rate}%">
+                                        <span class="fw-bold" t-if="(100 - state.stats.satisfaction_rate) > 10">
+                                            <i class="fa fa-thumbs-down me-1"/>
+                                            <t t-esc="formatNumber(state.stats.total_dislikes)"/> dislikes
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row g-3 mb-4">
+                    <!-- Feedback by Model -->
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-transparent">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-robot me-2 text-primary"/>
+                                    Feedback by Model
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <t t-if="state.byModel.length">
+                                    <t t-foreach="state.byModel" t-as="item" t-key="item.model">
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span class="fw-bold" t-esc="item.model"/>
+                                                <span class="text-muted">
+                                                    <span class="text-success me-2">
+                                                        <i class="fa fa-thumbs-up"/> <t t-esc="item.likes"/>
+                                                    </span>
+                                                    <span class="text-danger">
+                                                        <i class="fa fa-thumbs-down"/> <t t-esc="item.dislikes"/>
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success"
+                                                     t-attf-style="width: #{item.like_percent}%"
+                                                     t-att-title="item.likes + ' likes'">
+                                                </div>
+                                                <div class="progress-bar bg-danger"
+                                                     t-attf-style="width: #{item.dislike_percent}%"
+                                                     t-att-title="item.dislikes + ' dislikes'">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted text-center mb-0">No feedback data available</p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feedback by User -->
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-transparent">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-users me-2 text-success"/>
+                                    Feedback by User
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <t t-if="state.byUser.length">
+                                    <t t-foreach="state.byUser" t-as="item" t-key="item.user_id">
+                                        <div class="d-flex align-items-center mb-3 cursor-pointer"
+                                             t-on-click="() => this.openUserFeedback(item.user_id)">
+                                            <div class="flex-shrink-0">
+                                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="fa fa-user text-muted"/>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="fw-bold" t-esc="item.user"/>
+                                                    <div>
+                                                        <span class="badge bg-success me-1">
+                                                            <i class="fa fa-thumbs-up"/> <t t-esc="item.likes"/>
+                                                        </span>
+                                                        <span class="badge bg-danger">
+                                                            <i class="fa fa-thumbs-down"/> <t t-esc="item.dislikes"/>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="progress mt-1" style="height: 6px;">
+                                                    <div class="progress-bar bg-success"
+                                                         t-attf-style="width: #{item.like_percent}%">
+                                                    </div>
+                                                    <div class="progress-bar bg-danger"
+                                                         t-attf-style="width: #{item.dislike_percent}%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted text-center mb-0">No feedback data available</p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Feedback -->
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-transparent">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-clock-o me-2 text-info"/>
+                                    Recent Feedback
+                                </h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <t t-if="state.recent.length">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>User</th>
+                                                    <th>Model</th>
+                                                    <th class="text-center">Feedback</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="state.recent" t-as="item" t-key="item.id">
+                                                    <tr>
+                                                        <td t-esc="item.date"/>
+                                                        <td t-esc="item.user"/>
+                                                        <td t-esc="item.model"/>
+                                                        <td class="text-center">
+                                                            <span t-if="item.feedback === 'like'" class="badge bg-success">
+                                                                <i class="fa fa-thumbs-up"/> Like
+                                                            </span>
+                                                            <span t-else="" class="badge bg-danger">
+                                                                <i class="fa fa-thumbs-down"/> Dislike
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <p class="text-muted text-center p-4 mb-0">No recent feedback</p>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

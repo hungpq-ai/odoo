@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
@@ -300,3 +301,272 @@ class LLMUsageLog(models.Model):
                     pass
 
             return self.create(vals)
+
+    @api.model
+    def get_dashboard_data(self, period="month"):
+        """Get aggregated data for the analytics dashboard.
+
+        Args:
+            period: 'today', 'week', 'month', or 'all'
+
+        Returns:
+            Dictionary with stats and chart data
+        """
+        # Build domain based on period
+        domain = []
+        today = fields.Date.today()
+
+        if period == "today":
+            domain = [("request_date_day", "=", today)]
+        elif period == "week":
+            week_ago = today - timedelta(days=7)
+            domain = [("request_date_day", ">=", week_ago)]
+        elif period == "month":
+            month_start = today.replace(day=1)
+            domain = [("request_date_day", ">=", month_start)]
+        # 'all' = no domain filter
+
+        logs = self.search(domain)
+
+        # Calculate stats
+        total_requests = len(logs)
+        total_tokens = sum(logs.mapped("tokens_total"))
+        tokens_input = sum(logs.mapped("tokens_input"))
+        tokens_output = sum(logs.mapped("tokens_output"))
+        total_cost = sum(logs.mapped("cost"))
+        avg_cost = total_cost / total_requests if total_requests else 0
+
+        response_times = [r for r in logs.mapped("response_time") if r]
+        avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+
+        success_count = len(logs.filtered(lambda r: r.status == "success"))
+        success_rate = (success_count / total_requests * 100) if total_requests else 0
+
+        total_likes = len(logs.filtered(lambda r: r.feedback == "like"))
+        total_dislikes = len(logs.filtered(lambda r: r.feedback == "dislike"))
+        total_feedback = total_likes + total_dislikes
+        satisfaction_rate = (total_likes / total_feedback * 100) if total_feedback else 0
+
+        # Chart data - by model
+        model_data = {}
+        for log in logs:
+            model_name = log.model_name or (log.model_id.name if log.model_id else "Unknown")
+            if model_name not in model_data:
+                model_data[model_name] = 0
+            model_data[model_name] += 1
+
+        max_model_count = max(model_data.values()) if model_data else 1
+        by_model = [
+            {
+                "model": k,
+                "count": v,
+                "percent": (v / max_model_count * 100) if max_model_count else 0
+            }
+            for k, v in sorted(model_data.items(), key=lambda x: x[1], reverse=True)[:5]
+        ]
+
+        # Chart data - by user
+        user_data = {}
+        for log in logs:
+            user_name = log.user_id.name if log.user_id else "Unknown"
+            if user_name not in user_data:
+                user_data[user_name] = {"count": 0, "tokens": 0}
+            user_data[user_name]["count"] += 1
+            user_data[user_name]["tokens"] += log.tokens_total or 0
+
+        by_user = [
+            {
+                "user": k,
+                "count": v["count"],
+                "tokens": v["tokens"]
+            }
+            for k, v in sorted(user_data.items(), key=lambda x: x[1]["count"], reverse=True)[:5]
+        ]
+
+        return {
+            "stats": {
+                "total_requests": total_requests,
+                "total_tokens": total_tokens,
+                "tokens_input": tokens_input,
+                "tokens_output": tokens_output,
+                "total_cost": total_cost,
+                "avg_cost": avg_cost,
+                "avg_response_time": avg_response_time,
+                "success_rate": success_rate,
+                "total_likes": total_likes,
+                "total_dislikes": total_dislikes,
+                "satisfaction_rate": satisfaction_rate,
+            },
+            "charts": {
+                "byModel": by_model,
+                "byUser": by_user,
+            }
+        }
+
+    @api.model
+    def get_top_users_data(self, period="month"):
+        """Get top users data for the leaderboard.
+
+        Args:
+            period: 'today', 'week', 'month', or 'all'
+
+        Returns:
+            Dictionary with users list and totals
+        """
+        # Build domain based on period
+        domain = []
+        today = fields.Date.today()
+
+        if period == "today":
+            domain = [("request_date_day", "=", today)]
+        elif period == "week":
+            week_ago = today - timedelta(days=7)
+            domain = [("request_date_day", ">=", week_ago)]
+        elif period == "month":
+            month_start = today.replace(day=1)
+            domain = [("request_date_day", ">=", month_start)]
+
+        logs = self.search(domain)
+
+        # Aggregate by user
+        user_stats = {}
+        for log in logs:
+            user = log.user_id
+            if not user:
+                continue
+            user_id = user.id
+            if user_id not in user_stats:
+                user_stats[user_id] = {
+                    "user_id": user_id,
+                    "name": user.name,
+                    "email": user.login or "",
+                    "requests": 0,
+                    "tokens": 0,
+                    "cost": 0,
+                }
+            user_stats[user_id]["requests"] += 1
+            user_stats[user_id]["tokens"] += log.tokens_total or 0
+            user_stats[user_id]["cost"] += log.cost or 0
+
+        # Sort by requests and add rank
+        sorted_users = sorted(user_stats.values(), key=lambda x: x["requests"], reverse=True)
+
+        # Calculate totals and percentages
+        total_requests = sum(u["requests"] for u in sorted_users)
+        total_tokens = sum(u["tokens"] for u in sorted_users)
+        total_cost = sum(u["cost"] for u in sorted_users)
+
+        for i, user in enumerate(sorted_users):
+            user["rank"] = i + 1
+            user["percent"] = (user["requests"] / total_requests * 100) if total_requests else 0
+
+        return {
+            "users": sorted_users[:20],  # Top 20 users
+            "totals": {
+                "requests": total_requests,
+                "tokens": total_tokens,
+                "cost": total_cost,
+            }
+        }
+
+    @api.model
+    def get_feedback_data(self, period="month"):
+        """Get feedback data for the feedback dashboard.
+
+        Args:
+            period: 'today', 'week', 'month', or 'all'
+
+        Returns:
+            Dictionary with feedback stats and breakdowns
+        """
+        # Build domain based on period
+        domain = [("feedback", "!=", False)]
+        today = fields.Date.today()
+
+        if period == "today":
+            domain.append(("request_date_day", "=", today))
+        elif period == "week":
+            week_ago = today - timedelta(days=7)
+            domain.append(("request_date_day", ">=", week_ago))
+        elif period == "month":
+            month_start = today.replace(day=1)
+            domain.append(("request_date_day", ">=", month_start))
+
+        logs = self.search(domain, order="request_date desc")
+
+        # Calculate stats
+        total_likes = len(logs.filtered(lambda r: r.feedback == "like"))
+        total_dislikes = len(logs.filtered(lambda r: r.feedback == "dislike"))
+        total_feedback = total_likes + total_dislikes
+        satisfaction_rate = (total_likes / total_feedback * 100) if total_feedback else 0
+
+        # By model
+        model_data = {}
+        for log in logs:
+            model_name = log.model_name or (log.model_id.name if log.model_id else "Unknown")
+            if model_name not in model_data:
+                model_data[model_name] = {"likes": 0, "dislikes": 0}
+            if log.feedback == "like":
+                model_data[model_name]["likes"] += 1
+            else:
+                model_data[model_name]["dislikes"] += 1
+
+        by_model = []
+        for model, data in sorted(model_data.items(), key=lambda x: x[1]["likes"] + x[1]["dislikes"], reverse=True)[:5]:
+            total = data["likes"] + data["dislikes"]
+            by_model.append({
+                "model": model,
+                "likes": data["likes"],
+                "dislikes": data["dislikes"],
+                "like_percent": (data["likes"] / total * 100) if total else 0,
+                "dislike_percent": (data["dislikes"] / total * 100) if total else 0,
+            })
+
+        # By user
+        user_data = {}
+        for log in logs:
+            user = log.user_id
+            if not user:
+                continue
+            user_id = user.id
+            if user_id not in user_data:
+                user_data[user_id] = {"user_id": user_id, "user": user.name, "likes": 0, "dislikes": 0}
+            if log.feedback == "like":
+                user_data[user_id]["likes"] += 1
+            else:
+                user_data[user_id]["dislikes"] += 1
+
+        by_user = []
+        for data in sorted(user_data.values(), key=lambda x: x["likes"] + x["dislikes"], reverse=True)[:5]:
+            total = data["likes"] + data["dislikes"]
+            by_user.append({
+                "user_id": data["user_id"],
+                "user": data["user"],
+                "likes": data["likes"],
+                "dislikes": data["dislikes"],
+                "like_percent": (data["likes"] / total * 100) if total else 0,
+                "dislike_percent": (data["dislikes"] / total * 100) if total else 0,
+            })
+
+        # Recent feedback
+        recent = []
+        for log in logs[:10]:
+            recent.append({
+                "id": log.id,
+                "date": log.request_date.strftime("%Y-%m-%d %H:%M") if log.request_date else "",
+                "user": log.user_id.name if log.user_id else "Unknown",
+                "model": log.model_name or (log.model_id.name if log.model_id else "Unknown"),
+                "feedback": log.feedback,
+            })
+
+        return {
+            "stats": {
+                "total_feedback": total_feedback,
+                "total_likes": total_likes,
+                "total_dislikes": total_dislikes,
+                "satisfaction_rate": satisfaction_rate,
+            },
+            "by_model": by_model,
+            "by_user": by_user,
+            "recent": recent,
+        }

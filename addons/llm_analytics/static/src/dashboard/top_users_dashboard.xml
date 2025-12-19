@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="llm_analytics.TopUsersDashboard">
+        <div class="o_llm_analytics_dashboard">
+            <!-- Header -->
+            <div class="o_dashboard_header d-flex justify-content-between align-items-center mb-4 p-3 bg-white border-bottom">
+                <h2 class="mb-0">
+                    <i class="fa fa-users me-2 text-primary"/>
+                    Top Users Report
+                </h2>
+                <div class="btn-group" role="group">
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'today' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('today')">
+                        Today
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'week' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('week')">
+                        This Week
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'month' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('month')">
+                        This Month
+                    </button>
+                    <button type="button"
+                            t-attf-class="btn btn-sm #{state.period === 'all' ? 'btn-primary' : 'btn-outline-primary'}"
+                            t-on-click="() => this.onPeriodChange('all')">
+                        All Time
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div t-if="state.loading" class="text-center p-5">
+                <i class="fa fa-spinner fa-spin fa-3x text-primary"/>
+                <p class="mt-3 text-muted">Loading user data...</p>
+            </div>
+
+            <!-- Content -->
+            <div t-else="" class="o_dashboard_content p-3">
+                <!-- Summary Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="fa fa-users fa-2x text-primary mb-2"/>
+                                <h6 class="text-muted">Total Users</h6>
+                                <h2 class="mb-0" t-esc="state.users.length"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="fa fa-comments fa-2x text-success mb-2"/>
+                                <h6 class="text-muted">Total Requests</h6>
+                                <h2 class="mb-0" t-esc="formatNumber(state.totals.requests)"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <i class="fa fa-usd fa-2x text-warning mb-2"/>
+                                <h6 class="text-muted">Total Cost</h6>
+                                <h2 class="mb-0" t-esc="formatCost(state.totals.cost)"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Leaderboard -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0">
+                            <i class="fa fa-trophy me-2 text-warning"/>
+                            User Leaderboard
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <t t-if="state.users.length">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 60px;">Rank</th>
+                                            <th>User</th>
+                                            <th class="text-end">Requests</th>
+                                            <th class="text-end">Tokens</th>
+                                            <th class="text-end">Cost</th>
+                                            <th style="width: 200px;">Usage</th>
+                                            <th style="width: 80px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.users" t-as="user" t-key="user.user_id">
+                                            <tr t-attf-class="#{user.rank &lt;= 3 ? 'table-' + (user.rank === 1 ? 'warning' : user.rank === 2 ? 'secondary' : 'danger') + ' bg-opacity-10' : ''}">
+                                                <td>
+                                                    <span t-attf-class="badge rounded-pill #{getRankBadgeClass(user.rank)}" style="width: 35px;">
+                                                        <t t-if="user.rank &lt;= 3">
+                                                            <i t-attf-class="fa #{getRankIcon(user.rank)}"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <t t-esc="user.rank"/>
+                                                        </t>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                                            <i class="fa fa-user text-primary"/>
+                                                        </div>
+                                                        <div>
+                                                            <strong t-esc="user.name"/>
+                                                            <br/>
+                                                            <small class="text-muted" t-esc="user.email"/>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end align-middle">
+                                                    <span class="badge bg-primary" t-esc="formatNumber(user.requests)"/>
+                                                </td>
+                                                <td class="text-end align-middle">
+                                                    <span t-esc="formatNumber(user.tokens)"/>
+                                                </td>
+                                                <td class="text-end align-middle">
+                                                    <span t-esc="formatCost(user.cost)"/>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar bg-primary"
+                                                             t-attf-style="width: #{user.percent}%">
+                                                            <small t-esc="formatPercent(user.percent)"/>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end align-middle">
+                                                    <button class="btn btn-sm btn-outline-primary"
+                                                            t-on-click="() => this.openUserRequests(user.user_id)"
+                                                            title="View requests">
+                                                        <i class="fa fa-external-link"/>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="text-center p-5">
+                                <i class="fa fa-users fa-3x text-muted mb-3"/>
+                                <p class="text-muted">No user data available for this period</p>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>
