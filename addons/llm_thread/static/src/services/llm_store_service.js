@@ -145,6 +145,20 @@ export const llmStoreService = {
         this.streamingThreads.delete(threadId);
       },
 
+      // Helper to scroll chat to bottom after new messages
+      scrollToBottom() {
+        // Use setTimeout to ensure DOM is fully updated before scrolling
+        setTimeout(() => {
+          const threadArea = document.querySelector(".o-llm-thread-area");
+          if (threadArea) {
+            threadArea.scrollTo({
+              top: threadArea.scrollHeight,
+              behavior: "smooth",
+            });
+          }
+        }, 50);
+      },
+
       handleStreamMessage(threadId, data) {
         switch (data.type) {
           case "message_create": {
@@ -169,6 +183,8 @@ export const llmStoreService = {
             ) {
               createThread.messages.push(createdMessage);
             }
+            // Auto-scroll to bottom when new message arrives
+            this.scrollToBottom();
             break;
           }
 
@@ -181,6 +197,8 @@ export const llmStoreService = {
               { "mail.message": [data.message] },
               { html: true }
             );
+            // Auto-scroll to bottom when message content updates (streaming)
+            this.scrollToBottom();
             break;
 
           case "error":

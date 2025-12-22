@@ -28,7 +28,7 @@ class LLMThread(models.Model):
     )
     rag_min_similarity = fields.Float(
         string="Min Similarity",
-        default=0.5,
+        default=0.3,
         help="Minimum similarity score (0.0-1.0) for document retrieval",
     )
 

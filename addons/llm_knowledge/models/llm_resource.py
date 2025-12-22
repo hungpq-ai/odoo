@@ -515,12 +515,25 @@ class LLMResource(models.Model):
                 try:
                     resource.process_resource()
                     _logger.info(
-                        f"Auto-processed resource {resource.id} ({resource.name}) on creation"
+                        f"Auto-processed resource {resource.id} ({resource.name}) on creation - state: {resource.state}"
+                    )
+                    resource._post_styled_message(
+                        _("Auto-processed: chunked and embedded successfully"),
+                        "success",
                     )
                 except Exception as e:
-                    _logger.warning(
-                        f"Failed to auto-process resource {resource.id} on creation: {e}"
+                    _logger.error(
+                        f"Failed to auto-process resource {resource.id} on creation: {e}",
+                        exc_info=True
                     )
+                    resource._post_styled_message(
+                        _("Auto-process failed: %s") % str(e),
+                        "error",
+                    )
+            elif not resource.collection_ids:
+                _logger.info(
+                    f"Resource {resource.id} ({resource.name}) created without collection - skipping auto-process"
+                )
 
         return resources
 

@@ -148,7 +148,10 @@ class LLMKnowledgeChunkACL(models.Model):
         # Add resource filter to domain
         access_domain = [("resource_id", "in", accessible_resource_ids)]
 
-        return expression.AND([domain, access_domain])
+        if domain:
+            return expression.AND([domain, access_domain])
+        else:
+            return access_domain
 
     @api.model
     def search(self, args, offset=0, limit=None, order=None, **kwargs):
@@ -210,27 +213,12 @@ class LLMKnowledgeChunkACL(models.Model):
         Override vector search to apply access control.
 
         This is the core RAG search function that needs access control.
+        Note: Access control is already applied in search() via _apply_access_control_domain(),
+        so we don't need to apply it again here. The search_args already contains the
+        resource_id filter from the parent search() call.
         """
-        # Apply access control to search_args before vector search
-        if not self.env.su:
-            accessible_resource_ids = self._get_user_accessible_resource_ids()
-
-            if not accessible_resource_ids:
-                _logger.warning(
-                    f"User {self.env.uid} has no access to any resources, "
-                    "returning empty RAG results"
-                )
-                return 0 if count else self.browse([])
-
-            # Add resource filter to search_args
-            access_filter = [("resource_id", "in", accessible_resource_ids)]
-            search_args = expression.AND([search_args, access_filter]) if search_args else access_filter
-
-            _logger.debug(
-                f"RAG vector search with access control for user {self.env.uid}: "
-                f"accessible resources={len(accessible_resource_ids)}"
-            )
-
+        # Access control is already applied in search() method via _apply_access_control_domain()
+        # Just pass through to parent without adding duplicate filters
         return super()._vector_search_aggregate(
             collections=collections,
             query_vector=query_vector,

@@ -34,8 +34,8 @@ class UploadResourceWizard(models.TransientModel):
     )
     process_immediately = fields.Boolean(
         string="Process Immediately",
-        default=False,
-        help="If checked, resources will be immediately processed through the RAG pipeline",
+        default=True,
+        help="If checked, resources will be immediately processed through the RAG pipeline (chunk and embed)",
     )
     state = fields.Selection(
         [

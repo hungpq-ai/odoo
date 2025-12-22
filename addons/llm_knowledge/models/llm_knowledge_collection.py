@@ -463,7 +463,7 @@ class LLMKnowledgeCollection(models.Model):
         """
         Reindex all resources in the collection.
         This will reset resource states from 'ready' to 'chunked',
-        and recreate the collection in the store if necessary.
+        recreate the collection in the store, and re-embed all chunks.
         """
         for collection in self:
             # If we have a store, recreate the collection
@@ -486,6 +486,9 @@ class LLMKnowledgeCollection(models.Model):
                         collection._post_styled_message(
                             _("No resources found to reindex."), message_type="info"
                         )
+                    else:
+                        # Auto-embed after resetting
+                        collection.embed_resources()
 
                 except Exception as e:
                     collection._post_styled_message(
