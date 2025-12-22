@@ -43,6 +43,7 @@
                     <group>
                         <group string="Connection">
                             <field name="url" placeholder="http://localhost:9999" widget="url"/>
+                            <field name="endpoint_type" invisible="not endpoint_type"/>
                             <field name="auth_type"/>
                             <field name="api_key" password="True" invisible="auth_type == 'none'"/>
                         </group>

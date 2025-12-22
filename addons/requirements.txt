@@ -25,7 +25,12 @@ pydantic>=2.0.0
 pyyaml
 python-docx
 openpyxl
+python-pptx
 qdrant-client
 replicate
 requests
 markdown
+
+# Optional: OCR support
+pytesseract
+Pillow

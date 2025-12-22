@@ -76,6 +76,10 @@
                             <field name="default_chunker" />
                             <field name="default_chunk_size" />
                             <field name="default_chunk_overlap" />
+                            <field
+                name="ocr_correction_model_id"
+                options="{'no_create': True}"
+              />
                         </group>
                     </group>
                     <notebook>

@@ -463,11 +463,8 @@ export const llmStoreService = {
           return false;
         }
       },
-
-      // Delete a thread
       async deleteThread(threadId) {
         try {
-          // Delete from database
           await orm.unlink("llm.thread", [threadId]);
 
           notification.add(_t("Conversation deleted successfully."), {

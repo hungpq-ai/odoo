@@ -124,8 +124,10 @@ class LlmThreadA2a(models.Model):
         yield {"type": "message_create", "message": tool_msg.to_store_format()}
 
         try:
-            # Send message to A2A agent
-            response = agent.send_message(task)
+            # Send message to A2A agent with thread context_id for session continuity
+            context_id = f"llm.thread:{self.id}"
+            _logger.info("Sending A2A message with context_id: %s", context_id)
+            response = agent.send_message(task, context_id=context_id)
 
             # Parse A2A response to get text content
             result_text = self._parse_a2a_response(response)

@@ -14,6 +14,23 @@ try:
 except ImportError:
     DocxDocument = None
 
+try:
+    from pptx import Presentation
+except ImportError:
+    Presentation = None
+
+try:
+    import openpyxl
+except ImportError:
+    openpyxl = None
+
+try:
+    import pytesseract
+    from PIL import Image
+except ImportError:
+    pytesseract = None
+    Image = None
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
@@ -38,6 +55,7 @@ class LLMResourceParser(models.Model):
         return [
             ("default", "Default Parser"),
             ("json", "JSON Parser"),
+            ("ocr", "OCR Parser (for images)"),
         ]
 
     def parse(self):
@@ -95,7 +113,10 @@ class LLMResourceParser(models.Model):
         resources._unlock()
 
     def _get_parser(self, record, field_name, mimetype):
-        if self.parser != "default":
+        # Check for explicit parser selection
+        if self.parser == "ocr":
+            return self._parse_image_ocr
+        elif self.parser != "default":
             return getattr(self, f"parse_{self.parser}")
         record_name = (
             record.display_name
@@ -114,12 +135,18 @@ class LLMResourceParser(models.Model):
         elif mimetype.startswith("text/"):
             return self._parse_text
         elif mimetype.startswith("image/"):
-            # For images, store a reference in the content
-            return self._parse_image
+            # For images, use OCR to extract text (if available)
+            return self._parse_image_ocr
         elif mimetype == "application/json":
             return self.parse_json
         elif mimetype == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
             return self._parse_docx
+        elif mimetype == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+            return self._parse_xlsx
+        elif mimetype == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+            return self._parse_pptx
+        elif mimetype == "text/csv" or (mimetype == "application/octet-stream" and record_name.lower().endswith(".csv")):
+            return self._parse_csv
         else:
             return self._parse_default
 
@@ -363,6 +390,274 @@ class LLMResourceParser(models.Model):
             _logger.error(f"Error parsing DOCX: {str(e)}")
             self._post_styled_message(f"Error parsing DOCX: {str(e)}", "error")
             return self._parse_default(record, field)
+
+    def _parse_xlsx(self, record, field):
+        """Parse Excel (.xlsx) file and extract content as markdown tables"""
+        if openpyxl is None:
+            _logger.warning("openpyxl not installed, falling back to default parser")
+            return self._parse_default(record, field)
+
+        import io
+        xlsx_data = field["rawcontent"]
+
+        try:
+            xlsx_stream = io.BytesIO(xlsx_data)
+            workbook = openpyxl.load_workbook(xlsx_stream, read_only=True, data_only=True)
+
+            text_content = [f"# {record.name}\n"]
+
+            for sheet_name in workbook.sheetnames:
+                sheet = workbook[sheet_name]
+                text_content.append(f"\n## Sheet: {sheet_name}\n")
+
+                rows = list(sheet.iter_rows(values_only=True))
+                if not rows:
+                    text_content.append("*Empty sheet*\n")
+                    continue
+
+                # Find max columns with data
+                max_cols = max(len([c for c in row if c is not None]) for row in rows) if rows else 0
+                if max_cols == 0:
+                    text_content.append("*Empty sheet*\n")
+                    continue
+
+                # Build markdown table
+                table_md = []
+                for i, row in enumerate(rows):
+                    # Pad row to max_cols and convert None to empty string
+                    cells = [str(cell) if cell is not None else "" for cell in row[:max_cols]]
+                    while len(cells) < max_cols:
+                        cells.append("")
+                    table_md.append("| " + " | ".join(cells) + " |")
+                    if i == 0:
+                        table_md.append("| " + " | ".join(["---"] * max_cols) + " |")
+
+                text_content.append("\n".join(table_md))
+
+            workbook.close()
+            self.content = "\n\n".join(text_content)
+            return True
+
+        except Exception as e:
+            _logger.error(f"Error parsing XLSX: {str(e)}")
+            self._post_styled_message(f"Error parsing XLSX: {str(e)}", "error")
+            return self._parse_default(record, field)
+
+    def _parse_pptx(self, record, field):
+        """Parse PowerPoint (.pptx) file and extract text content"""
+        if Presentation is None:
+            _logger.warning("python-pptx not installed, falling back to default parser")
+            return self._parse_default(record, field)
+
+        import io
+        pptx_data = field["rawcontent"]
+
+        try:
+            pptx_stream = io.BytesIO(pptx_data)
+            prs = Presentation(pptx_stream)
+
+            text_content = [f"# {record.name}\n"]
+
+            for slide_num, slide in enumerate(prs.slides, 1):
+                text_content.append(f"\n## Slide {slide_num}\n")
+
+                slide_text = []
+                for shape in slide.shapes:
+                    if hasattr(shape, "text") and shape.text.strip():
+                        slide_text.append(shape.text.strip())
+
+                    # Handle tables in slides
+                    if shape.has_table:
+                        table = shape.table
+                        table_md = []
+                        for i, row in enumerate(table.rows):
+                            cells = [cell.text.strip() for cell in row.cells]
+                            table_md.append("| " + " | ".join(cells) + " |")
+                            if i == 0:
+                                table_md.append("| " + " | ".join(["---"] * len(cells)) + " |")
+                        slide_text.append("\n" + "\n".join(table_md))
+
+                if slide_text:
+                    text_content.append("\n".join(slide_text))
+                else:
+                    text_content.append("*No text content*")
+
+                # Extract notes if available
+                if slide.has_notes_slide and slide.notes_slide.notes_text_frame:
+                    notes = slide.notes_slide.notes_text_frame.text.strip()
+                    if notes:
+                        text_content.append(f"\n**Speaker Notes:** {notes}")
+
+            self.content = "\n\n".join(text_content)
+            return True
+
+        except Exception as e:
+            _logger.error(f"Error parsing PPTX: {str(e)}")
+            self._post_styled_message(f"Error parsing PPTX: {str(e)}", "error")
+            return self._parse_default(record, field)
+
+    def _parse_csv(self, record, field):
+        """Parse CSV file and convert to markdown table"""
+        import csv
+        import io
+
+        csv_data = field["rawcontent"]
+
+        try:
+            # Handle both bytes and string
+            if isinstance(csv_data, bytes):
+                csv_data = csv_data.decode("utf-8-sig")  # utf-8-sig handles BOM
+
+            csv_stream = io.StringIO(csv_data)
+
+            # Try to detect delimiter
+            sample = csv_data[:4096]
+            try:
+                dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+            except csv.Error:
+                dialect = csv.excel  # Default to comma
+
+            csv_stream.seek(0)
+            reader = csv.reader(csv_stream, dialect)
+            rows = list(reader)
+
+            if not rows:
+                self.content = f"# {record.name}\n\n*Empty CSV file*"
+                return True
+
+            text_content = [f"# {record.name}\n"]
+
+            # Build markdown table
+            table_md = []
+            max_cols = max(len(row) for row in rows) if rows else 0
+
+            for i, row in enumerate(rows):
+                # Pad row and escape pipe characters
+                cells = [cell.replace("|", "\\|") for cell in row]
+                while len(cells) < max_cols:
+                    cells.append("")
+                table_md.append("| " + " | ".join(cells) + " |")
+                if i == 0:
+                    table_md.append("| " + " | ".join(["---"] * max_cols) + " |")
+
+            text_content.append("\n".join(table_md))
+            self.content = "\n\n".join(text_content)
+            return True
+
+        except Exception as e:
+            _logger.error(f"Error parsing CSV: {str(e)}")
+            self._post_styled_message(f"Error parsing CSV: {str(e)}", "error")
+            return self._parse_default(record, field)
+
+    def _correct_ocr_text(self, ocr_text):
+        """Use LLM to correct OCR errors in Vietnamese/English text"""
+        if not ocr_text or len(ocr_text) < 10:
+            return ocr_text
+
+        try:
+            # Get OCR correction model from collection settings
+            ocr_model = None
+            provider = None
+
+            for collection in self.collection_ids:
+                if collection.ocr_correction_model_id:
+                    ocr_model = collection.ocr_correction_model_id
+                    provider = ocr_model.provider_id
+                    break
+
+            # If no model configured in collection, skip correction
+            if not ocr_model or not provider:
+                _logger.debug("No OCR correction model configured in collection, skipping correction")
+                return ocr_text
+
+            # Prepare prompt for OCR correction
+            system_prompt = """Bạn là chuyên gia sửa lỗi văn bản OCR tiếng Việt và tiếng Anh.
+
+NHIỆM VỤ: Sửa lỗi nhận dạng ký tự từ OCR, bao gồm:
+- Ký tự bị nhận sai (ví dụ: U thành V, l thành I, 0 thành O)
+- Ký tự bị dính liền (ví dụ: "textyaml" → "text/yaml")
+- Dấu thanh tiếng Việt bị sai hoặc thiếu
+- Lỗi chính tả do OCR
+
+QUY TẮC NGHIÊM NGẶT:
+1. CHỈ trả về văn bản đã sửa, KHÔNG giải thích
+2. Giữ nguyên cấu trúc, định dạng, xuống dòng
+3. KHÔNG thêm hoặc bớt nội dung
+4. Nếu thấy từ kỹ thuật như "text/yaml/json", "API", "SSE", "JSON" - hãy sửa về đúng format
+5. Với tiếng Việt, chú ý dấu thanh: à á ả ã ạ, è é ẻ ẽ ẹ, etc."""
+
+            user_message = f"""Sửa lỗi OCR cho văn bản sau. Chú ý các từ kỹ thuật IT có thể bị nhận sai ký tự.
+
+VĂN BẢN CẦN SỬA:
+{ocr_text}
+
+VĂN BẢN ĐÃ SỬA:"""
+
+            # Call LLM with specific model
+            response = provider.chat(
+                messages=self.env["mail.message"].browse([]),
+                model=ocr_model,
+                stream=False,
+                prepend_messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ]
+            )
+
+            if response:
+                if isinstance(response, dict):
+                    corrected = response.get("content", "") or response.get("text", "")
+                else:
+                    corrected = str(response)
+
+                if corrected and len(corrected) > 5:
+                    _logger.info(f"OCR text corrected by {ocr_model.name} (original: {len(ocr_text)} chars, corrected: {len(corrected)} chars)")
+                    return corrected.strip()
+
+            return ocr_text
+
+        except Exception as e:
+            _logger.warning(f"Failed to correct OCR text with LLM: {e}")
+            return ocr_text
+
+    def _parse_image_ocr(self, record, field):
+        """Parse image with OCR to extract text"""
+        if pytesseract is None or Image is None:
+            _logger.warning("pytesseract or PIL not installed, falling back to image reference")
+            return self._parse_image(record, field)
+
+        import io
+        image_data = field["rawcontent"]
+
+        try:
+            image_stream = io.BytesIO(image_data)
+            img = Image.open(image_stream)
+
+            # Run OCR with Vietnamese + English languages
+            ocr_text = pytesseract.image_to_string(img, lang='vie+eng')
+
+            text_content = [f"# {record.name}\n"]
+
+            # Add image reference
+            image_url = f"/web/image/{record.id}"
+            text_content.append(f"![{record.name}]({image_url})\n")
+
+            # Add OCR text if found
+            if ocr_text.strip():
+                # Try to correct OCR text using LLM
+                corrected_text = self._correct_ocr_text(ocr_text.strip())
+                text_content.append("## Extracted Text (OCR)\n")
+                text_content.append(corrected_text)
+            else:
+                text_content.append("*No text detected in image*")
+
+            self.content = "\n\n".join(text_content)
+            return True
+
+        except Exception as e:
+            _logger.error(f"Error running OCR: {str(e)}")
+            self._post_styled_message(f"Error running OCR: {str(e)}", "warning")
+            return self._parse_image(record, field)
 
     def _parse_default(self, record, field):
         # Default to a generic description for unsupported types

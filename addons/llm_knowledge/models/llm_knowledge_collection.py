@@ -110,6 +110,14 @@ class LLMKnowledgeCollection(models.Model):
         tracking=True,
     )
 
+    ocr_correction_model_id = fields.Many2one(
+        "llm.model",
+        string="OCR Correction Model",
+        domain="[('model_use', '=', 'chat')]",
+        tracking=True,
+        help="LLM model to use for correcting OCR text errors. Leave empty to skip OCR correction.",
+    )
+
     @api.model
     def _get_available_parsers(self):
         return self.env["llm.resource"]._get_available_parsers()

@@ -207,7 +207,16 @@ class LLMThread(models.Model):
                     "## RAG Instructions:\n"
                     "- Use the retrieved knowledge above to answer questions\n"
                     "- If the answer is not in the documents, say so\n"
-                    "- Use the glossary to understand internal terms correctly"
+                    "- Use the glossary to understand internal terms correctly\n"
+                    "- When presenting comparison data or tabular information:\n"
+                    "  * ALWAYS use proper Markdown table format with | separators\n"
+                    "  * Include header row and separator row (|---|---|)\n"
+                    "  * Keep columns aligned and readable\n"
+                    "  * Example:\n"
+                    "    | Feature | Product A | Product B |\n"
+                    "    |---------|-----------|----------|\n"
+                    "    | Price   | $100      | $150     |\n"
+                    "- For competitor comparisons, organize as clear comparison tables"
                 ),
             }
 

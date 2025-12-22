@@ -30,8 +30,10 @@ class LLMToolMCP(models.Model):
         if not self.mcp_server_id:
             raise UserError(_("This tool is not associated with an MCP server"))
 
+        # Auto-reconnect if not connected
         if not self.mcp_server_id.is_connected:
-            raise UserError(_("MCP server is not connected"))
+            _logger.info(f"MCP server '{self.mcp_server_id.name}' not connected, attempting to reconnect...")
+            self.mcp_server_id.start_server()
 
         result = self.mcp_server_id.execute_tool(self.name, parameters)
 

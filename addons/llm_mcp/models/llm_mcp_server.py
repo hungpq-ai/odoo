@@ -647,10 +647,32 @@ class LLMMCPServer(models.Model):
     def execute_tool(self, tool_name, arguments=None):
         self.ensure_one()
         manager = self._get_manager()
-        if not manager or not manager.running:
-            raise UserError(_("MCP server is not connected"))
 
-        return manager.call_tool(tool_name, arguments)
+        # Auto-reconnect if manager is not running
+        if not manager or not manager.running:
+            _logger.info(f"MCP server '{self.name}' manager not running, attempting to reconnect...")
+            # Update DB state to reflect actual disconnected state
+            if self.is_connected:
+                self.write({"is_connected": False})
+            self.start_server()
+            manager = self._get_manager()
+            if not manager or not manager.running:
+                raise UserError(_("Failed to reconnect to MCP server"))
+
+        try:
+            return manager.call_tool(tool_name, arguments)
+        except UserError as e:
+            # If connection lost during call, try to reconnect and retry once
+            error_msg = str(e)
+            if "connection lost" in error_msg.lower() or "not running" in error_msg.lower():
+                _logger.warning(f"MCP connection lost during tool call, attempting reconnect...")
+                self.write({"is_connected": False})
+                self._remove_manager()
+                self.start_server()
+                manager = self._get_manager()
+                if manager and manager.running:
+                    return manager.call_tool(tool_name, arguments)
+            raise
 
     @api.model
     def _auto_connect_servers(self):

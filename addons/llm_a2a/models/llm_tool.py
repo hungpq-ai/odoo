@@ -40,8 +40,20 @@ class LlmTool(models.Model):
 
         agent = self.a2a_agent_id
 
-        # Get context_id from kwargs if available (for conversation continuity)
+        # Get context_id from message context (thread res_id) for conversation continuity
         context_id = kwargs.get("context_id")
+        if not context_id:
+            # Try to get from message context - use thread id as context
+            message = self.env.context.get("message")
+            _logger.info("A2A context: message=%s, res_id=%s, model=%s",
+                        message, getattr(message, 'res_id', None) if message else None,
+                        getattr(message, 'model', None) if message else None)
+            if message and message.res_id:
+                # Use model:res_id as unique context identifier
+                context_id = f"{message.model}:{message.res_id}"
+                _logger.info("Using thread context_id for A2A: %s", context_id)
+            else:
+                _logger.warning("No message context or res_id available for A2A context_id")
 
         _logger.info(
             "Delegating task to A2A agent '%s': %s",

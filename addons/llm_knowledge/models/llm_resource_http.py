@@ -12,6 +12,19 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
+# Google Docs/Sheets/Slides URL patterns
+GOOGLE_DOCS_PATTERNS = [
+    # Google Docs: /document/d/{id}/edit -> /document/d/{id}/export?format=txt
+    (re.compile(r'https://docs\.google\.com/document/d/([^/]+)/edit.*'),
+     'https://docs.google.com/document/d/{id}/export?format=txt'),
+    # Google Sheets: /spreadsheets/d/{id}/edit -> /spreadsheets/d/{id}/export?format=csv
+    (re.compile(r'https://docs\.google\.com/spreadsheets/d/([^/]+)/edit.*'),
+     'https://docs.google.com/spreadsheets/d/{id}/export?format=csv'),
+    # Google Slides: /presentation/d/{id}/edit -> /presentation/d/{id}/export/txt
+    (re.compile(r'https://docs\.google\.com/presentation/d/([^/]+)/edit.*'),
+     'https://docs.google.com/presentation/d/{id}/export/txt'),
+]
+
 # Regex to find meta refresh tags
 # Handles single or double quotes around url and content values
 META_REFRESH_RE = re.compile(
@@ -22,6 +35,27 @@ META_REFRESH_RE = re.compile(
 
 class LLMResourceHTTPRetriever(models.Model):
     _inherit = "llm.resource"
+
+    def _convert_google_docs_url(self, url):
+        """
+        Convert Google Docs/Sheets/Slides edit URLs to export URLs.
+
+        Examples:
+        - docs.google.com/document/d/{id}/edit -> docs.google.com/document/d/{id}/export?format=txt
+        - docs.google.com/spreadsheets/d/{id}/edit -> docs.google.com/spreadsheets/d/{id}/export?format=csv
+        - docs.google.com/presentation/d/{id}/edit -> docs.google.com/presentation/d/{id}/export/txt
+
+        :param url: Original URL
+        :return: Converted export URL or original URL if not a Google Docs URL
+        """
+        for pattern, export_template in GOOGLE_DOCS_PATTERNS:
+            match = pattern.match(url)
+            if match:
+                doc_id = match.group(1)
+                export_url = export_template.format(id=doc_id)
+                _logger.info(f"Converted Google Docs URL: {url} -> {export_url}")
+                return export_url
+        return url
 
     @api.model
     def _get_available_retrievers(self):
@@ -289,6 +323,9 @@ class LLMResourceHTTPRetriever(models.Model):
                 f"No URL found for this resource {record.name}", "error"
             )
             return False
+
+        # Auto-convert Google Docs/Sheets/Slides URLs to export format
+        initial_url = self._convert_google_docs_url(initial_url)
 
         _logger.info(
             f"Starting HTTP retrieval for {record.name} from initial URL: {initial_url}"

@@ -264,7 +264,11 @@ class LLMThread(models.Model):
         """Process body content for LLM messages (markdown to HTML conversion)."""
         if not body:
             return body
-        html_content = markdown2.markdown(emoji.demojize(body))
+        # Enable tables, fenced-code-blocks, and other common extensions
+        html_content = markdown2.markdown(
+            emoji.demojize(body),
+            extras=["tables", "fenced-code-blocks", "code-friendly", "cuddled-lists"]
+        )
         return Markup(html_content)
 
     # ============================================================================

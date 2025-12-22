@@ -11,7 +11,16 @@
     "version": "18.0.1.1.0",
     "depends": ["llm", "llm_store", "llm_thread"],
     "external_dependencies": {
-        "python": ["requests", "markdownify", "PyMuPDF", "numpy"],
+        "python": [
+            "requests",
+            "markdownify",
+            "PyMuPDF",
+            "numpy",
+            "python-docx",
+            "openpyxl",
+            "python-pptx",
+            # Optional: "pytesseract", "Pillow" for OCR support
+        ],
     },
     "author": "Apexive Solutions LLC",
     "website": "https://github.com/apexive/odoo-llm",
