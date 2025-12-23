@@ -178,12 +178,12 @@ class LLMKnowledgeChunkACL(models.Model):
         )
 
     @api.model
-    def search_count(self, args):
+    def search_count(self, args, **kwargs):
         """
         Override search_count to apply access control.
         """
         secure_args = self._apply_access_control_domain(args)
-        return super().search_count(secure_args)
+        return super().search_count(secure_args, **kwargs)
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):

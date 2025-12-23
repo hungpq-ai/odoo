@@ -314,12 +314,93 @@ class LLMThread(models.Model):
         """Prepare chat kwargs for provider. Can be overridden by extensions."""
         prepend_msgs = self.get_prepend_messages()
 
+        # Handle strict RAG mode if enabled on assistant
+        if self.assistant_id and self.assistant_id.strict_rag_mode:
+            prepend_msgs = self._apply_strict_rag_mode(prepend_msgs, message_history)
+
         return {
             "messages": message_history,
             "tools": self.tool_ids,
             "stream": use_streaming,
             "prepend_messages": prepend_msgs,
         }
+
+    def _apply_strict_rag_mode(self, prepend_msgs, message_history):
+        """Apply strict RAG mode by searching knowledge base and modifying prompts.
+
+        Args:
+            prepend_msgs: List of prepend messages (system prompts, etc.)
+            message_history: List of conversation messages
+
+        Returns:
+            Modified prepend_msgs with RAG context injected
+        """
+        self.ensure_one()
+        assistant = self.assistant_id
+
+        # Get the last user message for RAG search
+        last_user_msg = None
+        for msg in reversed(message_history):
+            if msg.get("role") == "user":
+                content = msg.get("content", "")
+                if isinstance(content, list) and content:
+                    last_user_msg = content[0].get("text", "")
+                elif isinstance(content, str):
+                    last_user_msg = content
+                break
+
+        if not last_user_msg:
+            return prepend_msgs
+
+        # Perform strict RAG search
+        rag_result = assistant.strict_rag_search(
+            query=last_user_msg,
+            top_k=5,
+            top_n=3,
+            lang="vi"  # Default to Vietnamese, could be detected from user message
+        )
+
+        # If no results found in strict mode, we'll let the system prompt handle it
+        if not rag_result.get('has_results'):
+            # Add instruction to refuse answering
+            refuse_instruction = {
+                "role": "system",
+                "content": f"""STRICT RAG MODE - NO SOURCES FOUND
+
+The user asked: "{last_user_msg}"
+
+No relevant information was found in the knowledge base for this query.
+You MUST respond with exactly this message:
+
+{assistant.strict_rag_no_source_message}
+
+Do NOT attempt to answer the question using general knowledge."""
+            }
+            return prepend_msgs + [refuse_instruction]
+
+        # Inject RAG context into system prompt
+        rag_context_msg = {
+            "role": "system",
+            "content": f"""STRICT RAG MODE - KNOWLEDGE CONTEXT
+
+The following information was retrieved from the knowledge base to answer the user's question.
+You MUST ONLY use this information to answer. Do NOT use general knowledge.
+Always cite the source when providing information.
+
+RETRIEVED SOURCES:
+{rag_result['context']}
+
+SOURCES USED: {', '.join(rag_result['sources'])}
+"""
+        }
+
+        # Add strict RAG system prompt addition
+        strict_rag_instruction = {
+            "role": "system",
+            "content": assistant.get_strict_rag_system_prompt_addition()
+        }
+
+        return prepend_msgs + [strict_rag_instruction, rag_context_msg]
 
     def get_llm_messages(self, limit=25):
         """Get the most recent LLM messages in chronological order.

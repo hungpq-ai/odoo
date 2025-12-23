@@ -128,6 +128,40 @@ class LLMAssistant(models.Model):
         tracking=True,
     )
 
+    # Strict RAG mode
+    strict_rag_mode = fields.Boolean(
+        string="Strict RAG Mode",
+        default=False,
+        help="When enabled, the assistant will only answer based on retrieved sources. "
+             "If no relevant sources are found, it will refuse to answer instead of using general knowledge.",
+        tracking=True,
+    )
+    strict_rag_collection_id = fields.Many2one(
+        "llm.knowledge.collection",
+        string="RAG Collection",
+        help="Knowledge collection to use for strict RAG mode. If not set, all collections will be searched.",
+        tracking=True,
+    )
+    strict_rag_no_source_message = fields.Text(
+        string="No Source Message",
+        default="Xin lỗi, tôi không tìm thấy thông tin liên quan trong cơ sở kiến thức để trả lời câu hỏi này. "
+                "Vui lòng hỏi câu hỏi khác hoặc liên hệ bộ phận hỗ trợ.",
+        help="Message to show when no relevant sources are found in strict RAG mode",
+        tracking=True,
+    )
+    strict_rag_min_similarity = fields.Float(
+        string="Min Similarity",
+        default=0.6,
+        help="Minimum similarity threshold for RAG results in strict mode (0.0 - 1.0)",
+        tracking=True,
+    )
+    strict_rag_lang_priority = fields.Boolean(
+        string="Language Priority",
+        default=True,
+        help="When enabled, prioritize results matching the query language",
+        tracking=True,
+    )
+
     # Stats
     thread_count = fields.Integer(
         string="Thread Count",
@@ -544,3 +578,137 @@ class LLMAssistant(models.Model):
     def get_assistant_by_code(self, code):
         """Get assistant by code"""
         return self.search([("code", "=", code)], limit=1)
+
+    def strict_rag_search(self, query, top_k=5, top_n=3, lang=None):
+        """Perform strict RAG search for the given query.
+
+        Args:
+            query (str): The search query
+            top_k (int): Number of chunks per resource
+            top_n (int): Number of resources to retrieve
+            lang (str): Preferred language code (e.g., 'vi', 'en')
+
+        Returns:
+            dict: {
+                'has_results': bool,
+                'results': list of chunk data,
+                'sources': list of unique source names,
+                'context': formatted context string for LLM
+            }
+        """
+        self.ensure_one()
+
+        if not self.strict_rag_mode:
+            return {'has_results': True, 'results': [], 'sources': [], 'context': ''}
+
+        # Determine collection to search
+        collection_id = self.strict_rag_collection_id.id if self.strict_rag_collection_id else None
+
+        # Get chunk model
+        chunk_model = self.env["llm.knowledge.chunk"]
+
+        # Build search domain
+        search_kwargs = {
+            "query_min_similarity": self.strict_rag_min_similarity,
+        }
+        if collection_id:
+            search_kwargs["collection_id"] = collection_id
+
+        # Perform vector search
+        search_limit = top_n * top_k * 2
+        chunks = chunk_model.search(
+            args=[("embedding", "=", query)],
+            limit=search_limit,
+            **search_kwargs
+        )
+
+        if not chunks:
+            return {
+                'has_results': False,
+                'results': [],
+                'sources': [],
+                'context': '',
+                'no_source_message': self.strict_rag_no_source_message
+            }
+
+        # Process results - group by resource and apply language priority
+        results = []
+        chunks_by_resource = {}
+
+        for chunk in chunks:
+            res_id = chunk.resource_id.id
+            if res_id not in chunks_by_resource:
+                chunks_by_resource[res_id] = []
+            chunks_by_resource[res_id].append(chunk)
+
+        # Apply language priority if enabled
+        if self.strict_rag_lang_priority and lang:
+            # Sort resources: matching language first
+            sorted_resources = sorted(
+                chunks_by_resource.keys(),
+                key=lambda rid: (
+                    0 if chunks_by_resource[rid][0].lang == lang else 1,
+                    -max(c.similarity for c in chunks_by_resource[rid])
+                )
+            )
+        else:
+            # Sort by max similarity only
+            sorted_resources = sorted(
+                chunks_by_resource.keys(),
+                key=lambda rid: -max(c.similarity for c in chunks_by_resource[rid])
+            )
+
+        # Take top_n resources
+        selected_resources = sorted_resources[:top_n]
+
+        # Collect chunks from selected resources
+        sources = []
+        for res_id in selected_resources:
+            resource_chunks = sorted(
+                chunks_by_resource[res_id],
+                key=lambda c: -c.similarity
+            )[:top_k]
+
+            for chunk in resource_chunks:
+                results.append({
+                    'content': chunk.content,
+                    'resource_name': chunk.resource_id.name,
+                    'resource_id': chunk.resource_id.id,
+                    'chunk_id': chunk.id,
+                    'similarity': round(chunk.similarity, 4),
+                    'lang': chunk.lang,
+                })
+
+            if chunk.resource_id.name not in sources:
+                sources.append(chunk.resource_id.name)
+
+        # Format context for LLM
+        context_parts = []
+        for i, result in enumerate(results, 1):
+            context_parts.append(
+                f"[Source {i}: {result['resource_name']}]\n{result['content']}\n"
+            )
+        context = "\n".join(context_parts)
+
+        return {
+            'has_results': True,
+            'results': results,
+            'sources': sources,
+            'context': context
+        }
+
+    def get_strict_rag_system_prompt_addition(self):
+        """Get additional system prompt text for strict RAG mode."""
+        self.ensure_one()
+
+        if not self.strict_rag_mode:
+            return ""
+
+        return """
+IMPORTANT: You are operating in STRICT RAG MODE.
+- You MUST ONLY answer questions based on the provided context/sources.
+- If the context does not contain relevant information to answer the question, you MUST refuse to answer.
+- Do NOT use your general knowledge to answer questions.
+- Always cite the source when providing information.
+- If you cannot find relevant information in the sources, respond with the configured "no source" message.
+"""

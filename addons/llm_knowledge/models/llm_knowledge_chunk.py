@@ -38,6 +38,36 @@ class LLMKnowledgeChunk(models.Model):
         default={},
         help="Additional metadata for this chunk",
     )
+    # Embedding metadata
+    embedding_model_id = fields.Many2one(
+        "llm.model",
+        string="Embedding Model",
+        readonly=True,
+        help="The model used to create the embedding for this chunk",
+    )
+    embedding_dim = fields.Integer(
+        string="Embedding Dimension",
+        readonly=True,
+        help="Dimension of the embedding vector",
+    )
+    embedding_version = fields.Char(
+        string="Embedding Version",
+        readonly=True,
+        help="Version identifier of the embedding (model version + timestamp)",
+    )
+    embedded_at = fields.Datetime(
+        string="Embedded At",
+        readonly=True,
+        help="Timestamp when this chunk was embedded",
+    )
+    # Language from resource
+    lang = fields.Selection(
+        selection="resource_id.lang",
+        related="resource_id.lang",
+        store=True,
+        string="Language",
+        help="Language of this chunk (inherited from resource)",
+    )
     # Related field to resource collections
     collection_ids = fields.Many2many(
         "llm.knowledge.collection",

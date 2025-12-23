@@ -1,3 +1,4 @@
+import hashlib
 import logging
 from datetime import timedelta
 
@@ -48,6 +49,18 @@ class LLMResource(models.Model):
     content = fields.Text(
         string="Content",
         help="Markdown representation of the resource content",
+    )
+    content_hash = fields.Char(
+        string="Content Hash",
+        readonly=True,
+        index=True,
+        help="SHA256 hash of content for change detection",
+    )
+    lang = fields.Selection(
+        selection="_get_available_languages",
+        string="Language",
+        default="vi",
+        help="Primary language of the resource content",
     )
     external_url = fields.Char(
         string="External URL",
@@ -137,6 +150,40 @@ class LLMResource(models.Model):
             )
 
         return False
+
+    @api.model
+    def _get_available_languages(self):
+        """Get available languages for resources"""
+        return [
+            ("vi", "Tiếng Việt"),
+            ("en", "English"),
+            ("zh", "中文"),
+            ("ja", "日本語"),
+            ("ko", "한국어"),
+            ("fr", "Français"),
+            ("de", "Deutsch"),
+            ("es", "Español"),
+            ("pt", "Português"),
+            ("ru", "Русский"),
+            ("ar", "العربية"),
+            ("th", "ไทย"),
+            ("id", "Bahasa Indonesia"),
+            ("ms", "Bahasa Melayu"),
+        ]
+
+    def _compute_content_hash(self, content):
+        """Compute SHA256 hash of content"""
+        if not content:
+            return False
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+    def _check_content_changed(self):
+        """Check if content has changed by comparing hash"""
+        self.ensure_one()
+        if not self.content:
+            return False
+        new_hash = self._compute_content_hash(self.content)
+        return new_hash != self.content_hash
 
     @api.depends("lock_date")
     def _compute_kanban_state(self):
@@ -355,6 +402,62 @@ class LLMResource(models.Model):
                     "sticky": False,
                 },
             }
+
+    def action_recompute_hash(self):
+        """Recompute content hash and check if re-indexing is needed"""
+        reindex_needed = self.env["llm.resource"]
+
+        for resource in self:
+            if not resource.content:
+                resource._post_styled_message(
+                    _("No content to hash"),
+                    "warning",
+                )
+                continue
+
+            new_hash = resource._compute_content_hash(resource.content)
+            old_hash = resource.content_hash
+
+            if old_hash != new_hash:
+                # Content changed - update hash and mark for re-index
+                resource.write({"content_hash": new_hash})
+                if resource.state == "ready":
+                    reindex_needed |= resource
+                resource._post_styled_message(
+                    _("Hash updated: content has changed. Old: %(old)s... → New: %(new)s...") % {
+                        "old": (old_hash or "None")[:16],
+                        "new": new_hash[:16],
+                    },
+                    "info",
+                )
+            else:
+                resource._post_styled_message(
+                    _("Hash verified: content unchanged (%(hash)s...)") % {"hash": new_hash[:16]},
+                    "success",
+                )
+
+        # Trigger re-index for changed resources
+        if reindex_needed:
+            reindex_needed.write({"state": "parsed"})
+            return {
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Hash Recomputed"),
+                    "message": _("%(count)s resources have changed and will be re-indexed.") % {"count": len(reindex_needed)},
+                    "type": "info",
+                },
+            }
+
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Hash Verified"),
+                "message": _("Content hash verified for %(count)s resources.") % {"count": len(self)},
+                "type": "success",
+            },
+        }
 
     def action_reindex(self):
         """Reindex a single resource's chunks"""
@@ -578,12 +681,22 @@ class LLMResource(models.Model):
         return True
 
     def write(self, vals):
-        """Override write to handle collection_ids changes and cleanup vectors if needed"""
+        """Override write to handle collection_ids changes, content hash updates, and cleanup vectors if needed"""
         # Track collections before the write
         resources_collections = {}
         if "collection_ids" in vals:
             for resource in self:
                 resources_collections[resource.id] = resource.collection_ids.ids
+
+        # Handle content changes - compute hash and trigger re-index if needed
+        content_changed_resources = self.env["llm.resource"]
+        if "content" in vals and vals.get("content"):
+            new_hash = self._compute_content_hash(vals["content"])
+            vals["content_hash"] = new_hash
+            # Track resources where content actually changed
+            for resource in self:
+                if resource.content_hash != new_hash and resource.state == "ready":
+                    content_changed_resources |= resource
 
         # Perform the write operation
         result = super().write(vals)
@@ -591,6 +704,19 @@ class LLMResource(models.Model):
         # Handle collection changes
         if "collection_ids" in vals:
             self._handle_collection_ids_change(resources_collections)
+
+        # Trigger re-index for resources with changed content
+        if content_changed_resources:
+            _logger.info(
+                f"Content changed for {len(content_changed_resources)} resources, triggering re-index"
+            )
+            for resource in content_changed_resources:
+                resource._post_styled_message(
+                    _("Content changed detected, resource will be re-indexed"),
+                    "info",
+                )
+            # Reset state to trigger re-processing
+            content_changed_resources.write({"state": "parsed"})
 
         return result
 

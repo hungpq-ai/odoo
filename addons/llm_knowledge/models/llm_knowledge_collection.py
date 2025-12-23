@@ -679,6 +679,16 @@ class LLMKnowledgeCollection(models.Model):
                         ids=chunk_ids_in_batch,
                     )
 
+                    # Update chunk embedding metadata
+                    embedding_dim = len(embeddings[0]) if embeddings else 0
+                    embedding_version = f"{collection.embedding_model_id.name}_{fields.Datetime.now().strftime('%Y%m%d%H%M%S')}"
+                    batch.write({
+                        "embedding_model_id": collection.embedding_model_id.id,
+                        "embedding_dim": embedding_dim,
+                        "embedding_version": embedding_version,
+                        "embedded_at": fields.Datetime.now(),
+                    })
+
                     # Mark chunks in this batch as successfully processed
                     successfully_processed_chunk_ids.update(chunk_ids_in_batch)
                     processed_chunks_count += len(batch)
@@ -803,6 +813,55 @@ class LLMKnowledgeCollection(models.Model):
                 update_vals["parser"] = collection.default_parser
             if update_vals:
                 collection.resource_ids.write(update_vals)
+
+    def delete_vectors_by_resource(self, resource_ids):
+        """Delete all vectors for the given resource IDs from this collection.
+
+        This is a soft delete that only removes vectors from the vector store,
+        not the actual chunk records.
+
+        Args:
+            resource_ids: List of resource IDs whose vectors should be deleted
+
+        Returns:
+            int: Number of chunks whose vectors were deleted
+        """
+        self.ensure_one()
+        if not resource_ids:
+            return 0
+
+        if not self.store_id:
+            _logger.warning(f"No store configured for collection {self.name}")
+            return 0
+
+        # Find all chunks for these resources
+        chunks = self.env["llm.knowledge.chunk"].search([
+            ("resource_id", "in", resource_ids),
+            ("collection_ids", "=", self.id),
+        ])
+
+        if not chunks:
+            return 0
+
+        try:
+            # Delete vectors from store
+            self.delete_vectors(ids=chunks.ids)
+            _logger.info(
+                f"Deleted vectors for {len(chunks)} chunks from {len(resource_ids)} resources in collection {self.name}"
+            )
+
+            # Clear embedding metadata on chunks
+            chunks.write({
+                "embedding_model_id": False,
+                "embedding_dim": 0,
+                "embedding_version": False,
+                "embedded_at": False,
+            })
+
+            return len(chunks)
+        except Exception as e:
+            _logger.error(f"Error deleting vectors by resource: {e}")
+            return 0
 
     # Helper method for resource-collection relationship changes
     def _handle_removed_resources(self, removed_resource_ids):
