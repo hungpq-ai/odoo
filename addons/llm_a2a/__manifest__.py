@@ -27,6 +27,7 @@
     },
     "data": [
         "security/ir.model.access.csv",
+        "security/llm_a2a_security.xml",
         "views/llm_a2a_agent_views.xml",
         "views/llm_menu_views.xml",
         "data/llm_tool_data.xml",

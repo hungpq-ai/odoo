@@ -13,6 +13,11 @@ Requires the qdrant-client Python package.
     "external_dependencies": {
         "python": ["qdrant-client"],
     },
+    "data": [
+        "security/ir.model.access.csv",
+        "views/llm_qdrant_chunk_embedding_views.xml",
+        "views/menu_views.xml",
+    ],
     "images": ["static/description/banner.jpeg"],
     "installable": True,
     "application": False,

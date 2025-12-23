@@ -31,6 +31,7 @@
     },
     "data": [
         "security/ir.model.access.csv",
+        "security/llm_tool_security.xml",
         "views/llm_tool_views.xml",
         "views/llm_tool_consent_config_views.xml",
         "data/llm_tool_data.xml",

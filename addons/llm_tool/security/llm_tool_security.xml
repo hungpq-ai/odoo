@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Record Rules for llm.tool -->
+
+    <!-- User can read all tools -->
+    <record id="llm_tool_rule_read_all" model="ir.rule">
+        <field name="name">LLM Tool: Read All</field>
+        <field name="model_id" ref="model_llm_tool"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read">1</field>
+        <field name="perm_write">0</field>
+        <field name="perm_create">0</field>
+        <field name="perm_unlink">0</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- User can create/write/delete only their own tools -->
+    <record id="llm_tool_rule_own" model="ir.rule">
+        <field name="name">LLM Tool: Own Records</field>
+        <field name="model_id" ref="model_llm_tool"/>
+        <field name="domain_force">[('create_uid', '=', user.id)]</field>
+        <field name="perm_read">0</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">1</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- LLM Manager has full access -->
+    <record id="llm_tool_rule_manager" model="ir.rule">
+        <field name="name">LLM Tool: Manager Full Access</field>
+        <field name="model_id" ref="model_llm_tool"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">1</field>
+        <field name="groups" eval="[(4, ref('llm.group_llm_manager'))]"/>
+    </record>
+
+    <!-- Record Rules for llm.tool.consent.config -->
+
+    <!-- User can read all consent configs -->
+    <record id="llm_tool_consent_config_rule_read_all" model="ir.rule">
+        <field name="name">LLM Tool Consent Config: Read All</field>
+        <field name="model_id" ref="model_llm_tool_consent_config"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read">1</field>
+        <field name="perm_write">0</field>
+        <field name="perm_create">0</field>
+        <field name="perm_unlink">0</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- User can create/write/delete only their own consent configs -->
+    <record id="llm_tool_consent_config_rule_own" model="ir.rule">
+        <field name="name">LLM Tool Consent Config: Own Records</field>
+        <field name="model_id" ref="model_llm_tool_consent_config"/>
+        <field name="domain_force">[('create_uid', '=', user.id)]</field>
+        <field name="perm_read">0</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">1</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <!-- LLM Manager has full access to consent configs -->
+    <record id="llm_tool_consent_config_rule_manager" model="ir.rule">
+        <field name="name">LLM Tool Consent Config: Manager Full Access</field>
+        <field name="model_id" ref="model_llm_tool_consent_config"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">1</field>
+        <field name="groups" eval="[(4, ref('llm.group_llm_manager'))]"/>
+    </record>
+</odoo>

@@ -21,6 +21,7 @@
     "depends": ["base", "llm", "llm_tool"],
     "data": [
         "security/ir.model.access.csv",
+        "security/llm_mcp_security.xml",
         "views/llm_mcp_server_views.xml",
     ],
     "post_init_hook": "_post_init_hook",

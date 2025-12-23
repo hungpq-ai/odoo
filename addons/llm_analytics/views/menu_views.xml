@@ -5,7 +5,8 @@
         id="menu_llm_analytics"
         name="Analytics"
         parent="llm.menu_llm_root"
-        sequence="110"/>
+        sequence="110"
+        groups="llm.group_llm_manager"/>
 
     <!-- Dashboard Action (Client Action) -->
     <record id="action_llm_analytics_dashboard" model="ir.actions.client">

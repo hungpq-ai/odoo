@@ -75,7 +75,7 @@
     id="action_llm_knowledge_chunk_embedding"
     model="ir.actions.act_window"
   >
-        <field name="name">Chunk Embeddings</field>
+        <field name="name">PgVector Embeddings</field>
         <field name="res_model">llm.knowledge.chunk.embedding</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">

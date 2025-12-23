@@ -7,8 +7,8 @@ from odoo.exceptions import UserError
 _logger = logging.getLogger(__name__)
 
 # Define default values as constants
-DEFAULT_CHUNK_SIZE = 200
-DEFAULT_CHUNK_OVERLAP = 20
+DEFAULT_CHUNK_SIZE = 1000
+DEFAULT_CHUNK_OVERLAP = 200
 
 
 class LLMKnowledgeChunker(models.Model):
@@ -25,14 +25,14 @@ class LLMKnowledgeChunker(models.Model):
     )
     target_chunk_size = fields.Integer(
         string="Target Chunk Size",
-        default=200,
+        default=DEFAULT_CHUNK_SIZE,
         required=True,
         help="Target size of chunks in tokens",
         tracking=True,
     )
     target_chunk_overlap = fields.Integer(
         string="Chunk Overlap",
-        default=20,
+        default=DEFAULT_CHUNK_OVERLAP,
         required=True,
         help="Number of tokens to overlap between chunks",
         tracking=True,
